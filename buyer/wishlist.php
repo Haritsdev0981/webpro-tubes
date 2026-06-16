@@ -28,6 +28,18 @@ $user = requireAuth('buyer');
             <div><h1>Wishlist Saya ❤️</h1><p>Produk yang kamu simpan</p></div>
         </div>
         <div id="flash-area"></div>
+        <div id="wishlist-summary" class="stats-row" style="display:none; margin-bottom:20px;">
+            <div class="stat-box">
+                <div class="stat-icon">🛍️</div>
+                <span class="stat-val" id="wishlist-count">0</span>
+                <span class="stat-lbl">Jumlah Item</span>
+            </div>
+            <div class="stat-box accent">
+                <div class="stat-icon">💰</div>
+                <span class="stat-val" id="wishlist-total">Rp 0</span>
+                <span class="stat-lbl">Total Harga</span>
+            </div>
+        </div>
         <div id="wishlist-container" class="products-grid">
             <div class="loading">Memuat wishlist...</div>
         </div>
@@ -70,6 +82,7 @@ $user = requireAuth('buyer');
 
     <script>
         const API_KEY = '<?= htmlspecialchars($user['api_key']) ?>';
+        const UPLOAD_URL = '<?= UPLOAD_URL ?>';
         let currentProductId = null;
 
         function showFlash(type, msg) {
@@ -79,6 +92,23 @@ $user = requireAuth('buyer');
         }
 
         function escHtml(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+
+        function formatRupiah(num) {
+            return 'Rp ' + Number(num || 0).toLocaleString('id-ID');
+        }
+
+        function getWishlistImage(images) {
+            if (!images) return null;
+            try {
+                const parsed = typeof images === 'string' ? JSON.parse(images) : images;
+                if (Array.isArray(parsed) && parsed.length) {
+                    return parsed[0];
+                }
+            } catch (e) {
+                return null;
+            }
+            return null;
+        }
 
         async function loadWishlist() {
             const container = document.getElementById('wishlist-container');
@@ -91,27 +121,38 @@ $user = requireAuth('buyer');
                     container.innerHTML = '<div class="empty-state">Wishlist kosong. <a href="../products.php">Mulai belanja</a></div>';
                     return;
                 }
-                container.innerHTML = items.map(item => `
-                    <div class="product-card" style="cursor:default">
-                        <div class="product-thumb">
-                            <div class="thumb-placeholder">📦</div>
-                            <span class="condition-badge">${escHtml(item.condition_type)}</span>
-                        </div>
-                        <div class="product-body">
-                            <h3 class="product-name">${escHtml(item.name)}</h3>
-                            <div class="product-price">Rp ${Number(item.price).toLocaleString('id-ID')}</div>
-                            <div style="font-size:12px;color:#adb5bd;margin-bottom:8px">Seller: ${escHtml(item.seller_name)}</div>
-                            <div class="product-footer" style="flex-direction:column;gap:6px">
-                                <button class="btn-view" style="width:100%" onclick="openCheckout(${item.product_id}, '${escHtml(item.name)}', ${item.price})">
-                                    🛒 Checkout
-                                </button>
-                                <button class="btn-wishlist" style="width:100%;border-radius:6px" onclick="removeWishlist(${item.id})">
-                                    🗑 Hapus dari Wishlist
-                                </button>
+                const total = items.reduce((sum, item) => sum + Number(item.price || 0), 0);
+                document.getElementById('wishlist-count').textContent = items.length;
+                document.getElementById('wishlist-total').textContent = formatRupiah(total);
+                document.getElementById('wishlist-summary').style.display = 'grid';
+
+                container.innerHTML = items.map(item => {
+                    const imageFile = getWishlistImage(item.images);
+                    const imageHtml = imageFile ? `
+                        <img src="${UPLOAD_URL + imageFile}" alt="${escHtml(item.name)}" style="width:100%;height:100%;object-fit:cover;" />
+                    ` : '<div class="thumb-placeholder">📦</div>';
+                    return `
+                        <div class="product-card" style="cursor:default">
+                            <div class="product-thumb">
+                                ${imageHtml}
+                                <span class="condition-badge">${escHtml(item.condition_type)}</span>
+                            </div>
+                            <div class="product-body">
+                                <h3 class="product-name">${escHtml(item.name)}</h3>
+                                <div class="product-price">${formatRupiah(item.price)}</div>
+                                <div style="font-size:12px;color:#adb5bd;margin-bottom:8px">Seller: ${escHtml(item.seller_name)}</div>
+                                <div class="product-footer" style="flex-direction:column;gap:6px">
+                                    <button class="btn-view" style="width:100%" onclick="openCheckout(${item.product_id}, '${escHtml(item.name)}', ${item.price})">
+                                        🛒 Checkout
+                                    </button>
+                                    <button class="btn-wishlist" style="width:100%;border-radius:6px" onclick="removeWishlist(${item.id})">
+                                        🗑 Hapus dari Wishlist
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             } catch(e) {
                 container.innerHTML = '<div class="empty-state">Gagal memuat wishlist.</div>';
             }
