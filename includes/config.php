@@ -48,8 +48,7 @@ function jsonResponse($data, $status = 200) {
 
 // Helper: API Key Auth
 function requireApiKey() {
-    $headers = getallheaders();
-    $apiKey = $headers['X-Api-Key'] ?? $headers['X-API-Key'] ?? ($_GET['api_key'] ?? '');
+    $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? $_GET['api_key'] ?? '';
     if (empty($apiKey)) {
         jsonResponse(['error' => 'API Key required'], 401);
     }
