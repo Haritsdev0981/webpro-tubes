@@ -64,6 +64,33 @@ $user = requireAuth('buyer');
         </div>
     </div>
 
+    <!-- Edit Review Modal -->
+<div class="modal-overlay" id="modalEditReview" style="display:none">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3>Edit Ulasan</h3>
+            <button onclick="closeEditReview()">✕</button>
+        </div>
+        <input type="hidden" id="edit_review_id">
+        <div class="form-group">
+            <label>Rating</label>
+            <div class="star-rating" id="starRatingEdit"></div>
+            <input type="hidden" id="edit_rating_val" value="0">
+        </div>
+        <div class="form-group">
+            <label>Komentar</label>
+            <textarea id="edit_review_comment" rows="3"></textarea>
+        </div>
+        <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 14px;font-size:13px;color:#856404;margin-bottom:12px">
+            ⚠️ Perhatian: ulasan hanya bisa diedit <strong>satu kali</strong>. Setelah disimpan tidak bisa diubah lagi.
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeEditReview()">Batal</button>
+            <button class="btn-primary" onclick="submitEditReview()">Simpan Perubahan</button>
+        </div>
+    </div>
+</div>
+
     <script>
         const API_KEY = '<?= htmlspecialchars($user['api_key']) ?>';
 
@@ -117,9 +144,19 @@ $user = requireAuth('buyer');
                             ${o.status === 'pending' ? `
                                 <button class="btn-secondary" style="font-size:12px;padding:6px 12px" onclick="cancelOrder(${o.id})">❌ Batalkan</button>
                             ` : ''}
-                            ${o.status === 'completed' ? `
-                                <button class="btn-primary" style="font-size:12px;padding:6px 12px" onclick="openReview(${o.product_id}, ${o.id})">⭐ Beri Ulasan</button>
-                            ` : ''}
+                            ${o.status === 'completed' ? (() => {
+    if (!o.review) {
+        return `<button class="btn-primary" style="font-size:12px;padding:6px 12px" 
+                onclick="openReview(${o.product_id}, ${o.id})">⭐ Beri Ulasan</button>`;
+    } else if (o.review.is_edited == 0) {
+        return `<button class="btn-primary" style="font-size:12px;padding:6px 12px;background:#f59e0b" 
+                onclick="openEditReview(${o.review.id}, ${o.review.rating}, \`${escHtml(o.review.comment)}\`)">✏️ Edit Ulasan</button>`;
+    } else {
+        return `<span style="font-size:12px;color:#6c757d;padding:6px 0;display:inline-block">
+                    ✅ Sudah diulas &nbsp;<span style="color:#dc3545;font-size:11px">(tidak bisa diedit lagi)</span>
+                </span>`;
+    }
+})() : ''}
                         </div>
                     </div>
                 `).join('');
@@ -177,6 +214,51 @@ $user = requireAuth('buyer');
                 } else showFlash('error', data.error || 'Gagal mengirim ulasan.');
             } catch(e) { showFlash('error', 'Terjadi kesalahan.'); }
         }
+
+        let currentEditRating = 0;
+
+function openEditReview(reviewId, currentRating, currentComment) {
+    document.getElementById('edit_review_id').value = reviewId;
+    document.getElementById('edit_review_comment').value = currentComment;
+    setEditRating(currentRating);
+    document.getElementById('modalEditReview').style.display = 'flex';
+}
+function closeEditReview() { document.getElementById('modalEditReview').style.display = 'none'; }
+
+function setEditRating(n) {
+    currentEditRating = n;
+    document.getElementById('edit_rating_val').value = n;
+    const container = document.getElementById('starRatingEdit');
+    container.innerHTML = [1,2,3,4,5].map(i =>
+        `<button type="button" onclick="setEditRating(${i})">${i <= n ? '⭐' : '☆'}</button>`
+    ).join('');
+}
+
+async function submitEditReview() {
+    const id = document.getElementById('edit_review_id').value;
+    const comment = document.getElementById('edit_review_comment').value.trim();
+    if (!currentEditRating) { alert('Pilih rating terlebih dahulu.'); return; }
+    if (!confirm('Yakin ingin menyimpan? Ulasan hanya bisa diedit satu kali.')) return;
+
+    try {
+        const res = await fetch(`../api/reviews.php?id=${id}`, {
+            method: 'PUT',
+            headers: { 'X-API-Key': API_KEY, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rating: currentEditRating, comment })
+        });
+        const data = await res.json();
+        if (data.success) {
+            closeEditReview();
+            showFlash('success', '✏️ Ulasan berhasil diperbarui!');
+            loadOrders();
+        } else {
+            // Jika sudah pernah diedit, tampilkan alert seperti di gambar
+            showFlash('error', data.error || 'Gagal memperbarui ulasan.');
+            closeEditReview();
+            loadOrders(); // refresh agar tombol berubah jadi "tidak bisa diedit"
+        }
+    } catch(e) { showFlash('error', 'Terjadi kesalahan.'); }
+}
 
         loadOrders();
     </script>
