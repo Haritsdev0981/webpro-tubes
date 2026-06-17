@@ -1,0 +1,4 @@
+assets/uploads/products/*
+!assets/uploads/products/.gitkeep
+
+.DS_Store__MACOSX
