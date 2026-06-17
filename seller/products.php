@@ -89,6 +89,19 @@ $sellerId = $user['id'];
                     <label>Deskripsi</label>
                     <textarea name="description" rows="3" placeholder="Deskripsikan produk kamu..."></textarea>
                 </div>
+                <div class="form-group">
+                    <label>Foto Produk <span style="color:var(--gray-400);font-size:12px">(maks. 3 foto, 2MB/foto)</span></label>
+                    <div class="upload-area" id="uploadAreaAdd">
+                        <input type="file" name="images[]" id="imagesAdd" 
+                            accept="image/*" multiple style="display:none">
+                        <div class="upload-placeholder" onclick="document.getElementById('imagesAdd').click()">
+                            <div style="font-size:32px">📷</div>
+                            <div>Klik untuk memilih foto</div>
+                            <div style="font-size:12px;color:var(--gray-400)">JPG, PNG, WEBP (maks. 3 foto)</div>
+                        </div>
+                        <div class="image-preview-list" id="previewAdd"></div>
+                    </div>
+                </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" onclick="closeModal('modalAdd')">Batal</button>
                     <button type="submit" class="btn-primary">Simpan</button>
@@ -149,6 +162,18 @@ $sellerId = $user['id'];
                     <label>Deskripsi</label>
                     <textarea id="edit_description" rows="3"></textarea>
                 </div>
+                <div class="form-group">
+                    <label>Foto Produk <span style="color:var(--gray-400);font-size:12px">(ganti foto lama)</span></label>
+                    <div class="upload-area" id="uploadAreaEdit">
+                        <input type="file" name="images[]" id="imagesEdit" 
+                            accept="image/*" multiple style="display:none">
+                        <div class="upload-placeholder" onclick="document.getElementById('imagesEdit').click()">
+                            <div style="font-size:32px">📷</div>
+                            <div>Klik untuk mengganti foto</div>
+                        </div>
+                        <div class="image-preview-list" id="previewEdit"></div>
+                    </div>
+                </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" onclick="closeModal('modalEdit')">Batal</button>
                     <button type="submit" class="btn-primary">Perbarui</button>
@@ -170,11 +195,11 @@ $sellerId = $user['id'];
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        async function loadProducts() {
+       async function loadProducts() {
             const grid = document.getElementById('products-grid');
             grid.innerHTML = '<div class="loading">Memuat produk...</div>';
             try {
-                const res = await fetch(`${API_BASE}/products.php`, {
+                const res = await fetch(`${API_BASE}/products.php?t=${Date.now()}`, {  // ← tambah ?t=timestamp
                     headers: { 'X-API-Key': API_KEY }
                 });
                 const data = await res.json();
@@ -191,26 +216,43 @@ $sellerId = $user['id'];
                 grid.innerHTML = '<div class="empty-state">Belum ada produk. Klik "+ Add Product" untuk menambahkan.</div>';
                 return;
             }
-            grid.innerHTML = products.map(p => `
-                <div class="product-card">
-                    <div class="product-img">
-                        <div class="product-img-placeholder">📦</div>
-                        <span class="product-status status-${p.status}">${p.status.toUpperCase()}</span>
-                    </div>
-                    <div class="product-info">
-                        <h3>${escHtml(p.name)}</h3>
-                        <div class="product-price">Rp ${Number(p.price).toLocaleString('id-ID')}</div>
-                        <div class="product-meta">
-                            <span>🏷️ ${escHtml(p.cat_name || 'Tanpa Kategori')}</span>
-                            <span>ℹ️ Condition: ${escHtml(p.condition_type)}</span>
+            grid.innerHTML = products.map(p => {
+                // === BARU: ambil gambar pertama dari JSON images ===
+                let imgSrc = '../assets/uploads/products/no-image.png';
+                try {
+                    const imgs = JSON.parse(p.images || '[]');
+                    if (imgs.length && imgs[0] !== 'no-image.png') {
+                        imgSrc = `../assets/uploads/products/${imgs[0]}`;
+                    }
+                } catch(e) {}
+
+                const imgHtml = `<img src="${imgSrc}" alt="${escHtml(p.name)}" 
+                    class="product-thumb"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="product-img-placeholder" style="display:none">📦</div>`;
+                // === Akhir BARU ===
+
+                return `
+                    <div class="product-card">
+                        <div class="product-img">
+                            ${imgHtml}
+                            <span class="product-status status-${p.status}">${p.status.toUpperCase()}</span>
+                        </div>
+                        <div class="product-info">
+                            <h3>${escHtml(p.name)}</h3>
+                            <div class="product-price">Rp ${Number(p.price).toLocaleString('id-ID')}</div>
+                            <div class="product-meta">
+                                <span>🏷️ ${escHtml(p.cat_name || 'Tanpa Kategori')}</span>
+                                <span>ℹ️ ${escHtml(p.condition_type)}</span>
+                            </div>
+                        </div>
+                        <div class="product-actions">
+                            <button class="btn-edit-full" onclick='openEdit(${JSON.stringify(p)})'>Edit Details</button>
+                            <button class="btn-delete-icon" onclick="deleteProduct(${p.id})" title="Hapus">🗑</button>
                         </div>
                     </div>
-                    <div class="product-actions">
-                        <button class="btn-edit-full" onclick='openEdit(${JSON.stringify(p)})'>Edit Details</button>
-                        <button class="btn-delete-icon" onclick="deleteProduct(${p.id})" title="Hapus">🗑</button>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function escHtml(str) {
@@ -218,6 +260,29 @@ $sellerId = $user['id'];
             d.textContent = str || '';
             return d.innerHTML;
         }
+
+        // Preview gambar sebelum upload
+        function setupImagePreview(inputId, previewId, max = 3) {
+            document.getElementById(inputId).addEventListener('change', function() {
+                const preview = document.getElementById(previewId);
+                preview.innerHTML = '';
+                const files = Array.from(this.files).slice(0, max);
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        const div = document.createElement('div');
+                        div.className = 'preview-item';
+                        div.innerHTML = `<img src="${e.target.result}" alt="preview">`;
+                        preview.appendChild(div);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+        }
+
+        // Jalankan setup preview untuk kedua form
+        setupImagePreview('imagesAdd', 'previewAdd');
+        setupImagePreview('imagesEdit', 'previewEdit');
 
         function openEdit(p) {
             document.getElementById('edit_id').value = p.id;
@@ -228,6 +293,22 @@ $sellerId = $user['id'];
             document.getElementById('edit_condition').value = p.condition_type;
             document.getElementById('edit_status').value = p.status;
             document.getElementById('edit_description').value = p.description || '';
+
+            // === BARU: tampilkan gambar lama di preview edit ===
+            const previewEdit = document.getElementById('previewEdit');
+            previewEdit.innerHTML = '';
+            try {
+                const imgs = JSON.parse(p.images || '[]');
+                imgs.forEach(img => {
+                    if (img === 'no-image.png') return;
+                    const div = document.createElement('div');
+                    div.className = 'preview-item';
+                    div.innerHTML = `<img src="../assets/uploads/products/${escHtml(img)}" alt="foto">`;
+                    previewEdit.appendChild(div);
+                });
+            } catch(e) {}
+            // === Akhir BARU ===
+
             openModal('modalEdit');
         }
 
@@ -259,20 +340,25 @@ $sellerId = $user['id'];
         document.getElementById('formEdit').addEventListener('submit', async function(e) {
             e.preventDefault();
             const id = document.getElementById('edit_id').value;
-            const body = {
-                name: document.getElementById('edit_name').value,
-                price: document.getElementById('edit_price').value,
-                stock: document.getElementById('edit_stock').value,
-                category_id: document.getElementById('edit_category_id').value,
-                condition_type: document.getElementById('edit_condition').value,
-                status: document.getElementById('edit_status').value,
-                description: document.getElementById('edit_description').value
-            };
+
+            const fd = new FormData();
+            fd.append('_method', 'PUT');   // ← method spoofing agar PHP bisa baca $_FILES
+            fd.append('name', document.getElementById('edit_name').value);
+            fd.append('price', document.getElementById('edit_price').value);
+            fd.append('stock', document.getElementById('edit_stock').value);
+            fd.append('category_id', document.getElementById('edit_category_id').value);
+            fd.append('condition_type', document.getElementById('edit_condition').value);
+            fd.append('status', document.getElementById('edit_status').value);
+            fd.append('description', document.getElementById('edit_description').value);
+
+            const files = document.getElementById('imagesEdit').files;
+            for (let f of files) fd.append('images[]', f);
+
             try {
                 const res = await fetch(`${API_BASE}/products.php?id=${id}`, {
-                    method: 'PUT',
-                    headers: { 'X-API-Key': API_KEY, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
+                    method: 'POST',   // ← ganti PUT menjadi POST
+                    headers: { 'X-API-Key': API_KEY },
+                    body: fd
                 });
                 const data = await res.json();
                 if (data.success) {

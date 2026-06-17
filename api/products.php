@@ -73,6 +73,111 @@ if ($method === 'GET') {
     jsonResponse(['success' => true, 'data' => $stmt->fetchAll()]);
 }
 
+// ============ PUT: update product ============
+// Gunakan method spoofing: POST + _method=PUT karena PHP tidak baca $_FILES pada PUT
+if ($method === 'POST' && ($_POST['_method'] ?? '') === 'PUT') {
+    $id = (int)($_GET['id'] ?? 0);
+    if (!$id) jsonResponse(['error' => 'Product ID required'], 400);
+
+    $check = $db->prepare("SELECT * FROM products WHERE id = ?");
+    $check->execute([$id]);
+    $product = $check->fetch();
+
+    if (!$product) jsonResponse(['error' => 'Produk tidak ditemukan'], 404);
+    if ($authUser['role'] === 'seller' && $product['seller_id'] != $authUser['id']) {
+        jsonResponse(['error' => 'Bukan produk Anda'], 403);
+    }
+
+    // Baca dari $_POST (bukan php://input, karena multipart/form-data)
+    $name          = trim($_POST['name'] ?? $product['name']);
+    $price         = (float)($_POST['price'] ?? $product['price']);
+    $description   = trim($_POST['description'] ?? $product['description']);
+    $categoryId    = isset($_POST['category_id']) ? ((int)$_POST['category_id'] ?: null) : $product['category_id'];
+    $conditionType = $_POST['condition_type'] ?? $product['condition_type'];
+    $stock         = (int)($_POST['stock'] ?? $product['stock']);
+    $status        = $_POST['status'] ?? $product['status'];
+
+    if (!in_array($status, ['active','inactive','sold'])) $status = 'active';
+
+    // Handle upload gambar baru
+    $existingImages = json_decode($product['images'], true) ?? ['no-image.png'];
+
+    if (!empty($_FILES['images']['name'][0])) {
+        $uploadDir    = UPLOAD_DIR . 'products/';
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        $maxSize      = 2 * 1024 * 1024;
+        $newImages    = [];
+
+        foreach ($_FILES['images']['tmp_name'] as $i => $tmpName) {
+            if ($_FILES['images']['error'][$i] !== UPLOAD_ERR_OK) continue;
+            if (!in_array($_FILES['images']['type'][$i], $allowedTypes)) continue;
+            if ($_FILES['images']['size'][$i] > $maxSize) continue;
+
+            $ext      = pathinfo($_FILES['images']['name'][$i], PATHINFO_EXTENSION);
+            $filename = 'prod_' . $authUser['id'] . '_' . uniqid() . '.' . strtolower($ext);
+            if (move_uploaded_file($tmpName, $uploadDir . $filename)) {
+                $newImages[] = $filename;
+            }
+        }
+
+        if (!empty($newImages)) {
+            // Hapus file lama di server
+            foreach ($existingImages as $oldImg) {
+                if ($oldImg !== 'no-image.png') {
+                    @unlink(UPLOAD_DIR . 'products/' . $oldImg);
+                }
+            }
+            $finalImages = $newImages;
+        } else {
+            $finalImages = $existingImages;
+        }
+    } else {
+        $finalImages = $existingImages;
+    }
+
+    $stmt = $db->prepare("UPDATE products 
+        SET name=?, price=?, description=?, category_id=?, condition_type=?, stock=?, status=?, images=? 
+        WHERE id=?");
+    $stmt->execute([$name, $price, $description, $categoryId, $conditionType, $stock, $status, json_encode($finalImages), $id]);
+
+    jsonResponse(['success' => true, 'message' => 'Produk berhasil diperbarui']);
+}
+
+// Blok PUT lama (tetap ada untuk jaga kompatibilitas — hanya untuk request JSON tanpa file)
+if ($method === 'PUT') {
+    $id = (int)($_GET['id'] ?? 0);
+    if (!$id) jsonResponse(['error' => 'Product ID required'], 400);
+
+    $check = $db->prepare("SELECT * FROM products WHERE id = ?");
+    $check->execute([$id]);
+    $product = $check->fetch();
+
+    if (!$product) jsonResponse(['error' => 'Produk tidak ditemukan'], 404);
+    if ($authUser['role'] === 'seller' && $product['seller_id'] != $authUser['id']) {
+        jsonResponse(['error' => 'Bukan produk Anda'], 403);
+    }
+
+    $body          = json_decode(file_get_contents('php://input'), true) ?? [];
+    $name          = trim($body['name'] ?? $product['name']);
+    $price         = (float)($body['price'] ?? $product['price']);
+    $description   = trim($body['description'] ?? $product['description']);
+    $categoryId    = isset($body['category_id']) ? ((int)$body['category_id'] ?: null) : $product['category_id'];
+    $conditionType = $body['condition_type'] ?? $product['condition_type'];
+    $stock         = (int)($body['stock'] ?? $product['stock']);
+    $status        = $body['status'] ?? $product['status'];
+    $imagesJson    = $product['images'];
+
+    if (!in_array($status, ['active','inactive','sold'])) $status = 'active';
+
+    $stmt = $db->prepare("UPDATE products 
+        SET name=?, price=?, description=?, category_id=?, condition_type=?, stock=?, status=?, images=? 
+        WHERE id=?");
+    $stmt->execute([$name, $price, $description, $categoryId, $conditionType, $stock, $status, $imagesJson, $id]);
+
+    jsonResponse(['success' => true, 'message' => 'Produk berhasil diperbarui']);
+}
+
 // ============ POST: create product ============
 if ($method === 'POST') {
     if ($authUser['role'] !== 'seller') {
@@ -90,45 +195,45 @@ if ($method === 'POST') {
         jsonResponse(['error' => 'Nama produk dan harga wajib diisi'], 400);
     }
 
-    $stmt = $db->prepare("INSERT INTO products (seller_id, category_id, name, description, price, condition_type, stock, images)
-                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$authUser['id'], $categoryId, $name, $description, $price, $conditionType, $stock, '["no-image.png"]']);
+    // === BARU: Handle upload gambar ===
+    $imageList = ['no-image.png'];
+
+    if (!empty($_FILES['images']['name'][0])) {
+        $uploadDir = UPLOAD_DIR . 'products/';
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        $maxSize      = 2 * 1024 * 1024; // 2MB per file
+        $imageList    = [];
+
+        foreach ($_FILES['images']['tmp_name'] as $i => $tmpName) {
+            if ($_FILES['images']['error'][$i] !== UPLOAD_ERR_OK) continue;
+            if (!in_array($_FILES['images']['type'][$i], $allowedTypes)) continue;
+            if ($_FILES['images']['size'][$i] > $maxSize) continue;
+
+            $ext      = pathinfo($_FILES['images']['name'][$i], PATHINFO_EXTENSION);
+            $filename = 'prod_' . $authUser['id'] . '_' . uniqid() . '.' . strtolower($ext);
+            if (move_uploaded_file($tmpName, $uploadDir . $filename)) {
+                $imageList[] = $filename;
+            }
+        }
+
+        if (empty($imageList)) $imageList = ['no-image.png'];
+    }
+    // === Akhir handle upload ===
+
+    $stmt = $db->prepare("INSERT INTO products 
+        (seller_id, category_id, name, description, price, condition_type, stock, images)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([
+        $authUser['id'], $categoryId, $name, $description,
+        $price, $conditionType, $stock, json_encode($imageList)
+    ]);
     $id = $db->lastInsertId();
 
     jsonResponse(['success' => true, 'message' => 'Produk berhasil ditambahkan', 'id' => $id], 201);
 }
 
-// ============ PUT: update product ============
-if ($method === 'PUT') {
-    $id = (int)($_GET['id'] ?? 0);
-    if (!$id) jsonResponse(['error' => 'Product ID required'], 400);
-
-    // Verify ownership
-    $check = $db->prepare("SELECT * FROM products WHERE id = ?");
-    $check->execute([$id]);
-    $product = $check->fetch();
-
-    if (!$product) jsonResponse(['error' => 'Produk tidak ditemukan'], 404);
-    if ($authUser['role'] === 'seller' && $product['seller_id'] != $authUser['id']) {
-        jsonResponse(['error' => 'Bukan produk Anda'], 403);
-    }
-
-    $body = json_decode(file_get_contents('php://input'), true) ?? [];
-    $name          = trim($body['name'] ?? $product['name']);
-    $price         = (float)($body['price'] ?? $product['price']);
-    $description   = trim($body['description'] ?? $product['description']);
-    $categoryId    = isset($body['category_id']) ? ((int)$body['category_id'] ?: null) : $product['category_id'];
-    $conditionType = $body['condition_type'] ?? $product['condition_type'];
-    $stock         = (int)($body['stock'] ?? $product['stock']);
-    $status        = $body['status'] ?? $product['status'];
-
-    if (!in_array($status, ['active','inactive','sold'])) $status = 'active';
-
-    $stmt = $db->prepare("UPDATE products SET name=?, price=?, description=?, category_id=?, condition_type=?, stock=?, status=? WHERE id=?");
-    $stmt->execute([$name, $price, $description, $categoryId, $conditionType, $stock, $status, $id]);
-
-    jsonResponse(['success' => true, 'message' => 'Produk berhasil diperbarui']);
-}
 
 // ============ DELETE: delete product ============
 if ($method === 'DELETE') {
