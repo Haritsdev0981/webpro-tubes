@@ -138,6 +138,7 @@ CREATE TABLE reviews (
     comment TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_edited TINYINT(1) DEFAULT 0 COMMENT '0 = belum pernah diedit, 1 = sudah diedit sekali',
     FOREIGN KEY (buyer_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     FOREIGN KEY (checkout_id) REFERENCES checkouts(id) ON DELETE SET NULL,
