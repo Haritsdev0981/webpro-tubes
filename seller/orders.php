@@ -33,7 +33,6 @@ $user = requireAuth('seller');
         </div>
     </div>
 
-    <!-- Update Status Modal -->
     <div class="modal-overlay" id="modalStatus" style="display:none">
         <div class="modal-box">
             <div class="modal-head">

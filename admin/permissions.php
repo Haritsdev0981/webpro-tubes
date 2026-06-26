@@ -56,10 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-// Get buyers
 $buyers = $db->query("SELECT id, name, email FROM users WHERE role = 'buyer' AND is_active = 1 ORDER BY name")->fetchAll();
 
-// Get permissions with user info
 $perms = $db->query("
     SELECT fp.*, u.name as user_name, u.email as user_email
     FROM feature_permissions fp
@@ -67,7 +65,6 @@ $perms = $db->query("
     ORDER BY u.name, fp.feature_name
 ")->fetchAll();
 
-// Selected user for detail view
 $selectedUserId = (int)($_GET['user_id'] ?? 0);
 $userPerms = [];
 if ($selectedUserId) {
@@ -98,7 +95,6 @@ if ($selectedUserId) {
                 </div>
             </div>
 
-            <!-- Select User -->
             <div class="section-card">
                 <h2>Pilih User untuk Dikelola</h2>
                 <form method="GET" class="filter-bar" style="margin-top:12px">
@@ -142,7 +138,6 @@ if ($selectedUserId) {
                 <?php endif; ?>
             </div>
 
-            <!-- All Permissions Table -->
             <div class="section-card">
                 <h2>Semua Permission</h2>
                 <table class="data-table" style="margin-top:12px">
@@ -185,7 +180,6 @@ if ($selectedUserId) {
         </main>
     </div>
 
-    <!-- Permission Modal -->
     <div class="modal-overlay" id="modalPerm">
         <div class="modal-box">
             <div class="modal-head">

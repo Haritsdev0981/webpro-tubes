@@ -5,7 +5,6 @@ $user = requireAuth('admin');
 $db = getDB();
 $pageTitle = 'Manajemen User';
 
-// Handle POST actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
@@ -72,7 +71,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-// Fetch & filter
 $search = trim($_GET['search'] ?? '');
 $filterRole = $_GET['role'] ?? '';
 $where = "WHERE u.role != 'admin'";
@@ -84,7 +82,6 @@ $stmt = $db->prepare("SELECT u.* FROM users u $where ORDER BY u.created_at DESC"
 $stmt->execute($params);
 $users = $stmt->fetchAll();
 
-// Edit user data
 $editUser = null;
 if (isset($_GET['edit'])) {
     $es = $db->prepare("SELECT * FROM users WHERE id = ?");
@@ -113,7 +110,6 @@ if (isset($_GET['edit'])) {
                 <button class="btn-primary" onclick="openModal('modalCreate')">+ Tambah User</button>
             </div>
 
-            <!-- Filter Bar -->
             <form method="GET" class="filter-bar">
                 <input type="text" name="search" placeholder="Cari nama atau email..." value="<?= htmlspecialchars($search) ?>">
                 <select name="role">
@@ -125,7 +121,6 @@ if (isset($_GET['edit'])) {
                 <a href="users.php" class="btn-secondary">Reset</a>
             </form>
 
-            <!-- Table -->
             <div class="section-card">
                 <table class="data-table">
                     <thead>
@@ -170,7 +165,6 @@ if (isset($_GET['edit'])) {
         </main>
     </div>
 
-    <!-- Modal Create -->
     <div class="modal-overlay" id="modalCreate">
         <div class="modal-box">
             <div class="modal-head">
@@ -211,7 +205,6 @@ if (isset($_GET['edit'])) {
         </div>
     </div>
 
-    <!-- Modal Edit -->
     <?php if ($editUser): ?>
     <div class="modal-overlay open" id="modalEdit">
         <div class="modal-box">

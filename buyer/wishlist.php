@@ -45,7 +45,6 @@ $user = requireAuth('buyer');
         </div>
     </div>
 
-    <!-- Checkout Modal -->
     <div class="modal-overlay" id="modalCheckout" style="display:none">
         <div class="modal-box">
             <div class="modal-head">

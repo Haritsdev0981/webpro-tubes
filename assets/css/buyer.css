@@ -1,7 +1,3 @@
-/* ============================================
-   TELOVED - Buyer / Public CSS
-   Matching original UI: Dark Teal + Yellow
-   ============================================ */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
@@ -25,7 +21,6 @@
 
 body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--white); color: var(--gray-900); }
 
-/* ===== NAVBAR ===== */
 .navbar { background: var(--primary); position: sticky; top: 0; z-index: 100; }
 
 .nav-top {
@@ -108,7 +103,6 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--white);
     background: rgba(255,255,255,0.08);
 }
 
-/* ===== HERO ===== */
 .hero {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
     min-height: 380px;
@@ -145,7 +139,6 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--white);
 }
 .btn-hero:hover { background: var(--accent-dark); }
 
-/* ===== CATEGORIES ===== */
 .categories-section { padding: 40px 32px; }
 .categories-section h2 { font-size: 22px; font-weight: 700; margin-bottom: 20px; text-align: center; color: var(--gray-900); }
 
@@ -186,7 +179,6 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--white);
 
 .cat-item span { font-size: 12px; font-weight: 500; text-align: center; }
 
-/* ===== PRODUCTS SECTION ===== */
 .products-section { padding: 20px 32px 40px; }
 
 .section-header { margin-bottom: 20px; }
@@ -257,9 +249,6 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--white);
 }
 .btn-view:hover { background: var(--accent-dark); }
 
-/* ===== SELLER CSS EXTENSIONS (for seller.css import) ===== */
-
-/* ===== SELLER NAV ===== */
 .seller-nav {
     display: flex;
     align-items: center;
@@ -291,7 +280,6 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--white);
     font-size: 13px;
 }
 
-/* ===== SELLER PAGES ===== */
 .seller-wrapper, .seller-page { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
 
 .welcome-card {
@@ -340,7 +328,6 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--white);
 .stat-val { font-size: 24px; font-weight: 700; color: var(--gray-900); display: block; }
 .stat-lbl { font-size: 13px; color: var(--gray-500); }
 
-/* Seller products grid */
 .page-hd {
     display: flex;
     align-items: flex-start;
@@ -420,10 +407,8 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--white);
 }
 .btn-delete-icon:hover { background: var(--danger); color: var(--white); border-color: var(--danger); }
 
-/* BUYER PAGES */
 .buyer-page { max-width: 1100px; margin: 0 auto; padding: 28px 24px; }
 
-/* Filter sidebar */
 .buyer-layout { display: grid; grid-template-columns: 240px 1fr; gap: 24px; align-items: start; }
 .filter-sidebar { background: var(--white); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); position: sticky; top: 80px; }
 .filter-sidebar h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--gray-900); }
@@ -441,7 +426,6 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--white);
 .price-range input { flex: 1; }
 .price-range span { color: var(--gray-500); font-size: 12px; }
 
-/* MODAL */
 .modal-overlay {
     display: none; position: fixed; inset: 0;
     background: rgba(0,0,0,0.45); z-index: 200;
@@ -486,7 +470,6 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--white);
     font-size: 14px; cursor: pointer; text-decoration: none; display: inline-block;
 }
 
-/* FLASH / TOAST */
 .flash-msg {
     padding: 12px 18px; border-radius: 8px; font-size: 13px;
     display: flex; align-items: center; gap: 12px;
@@ -506,12 +489,10 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--white);
 }
 .toast.show { opacity: 1; transform: translateY(0); }
 
-/* Loading / Empty */
 .loading { text-align: center; padding: 40px; color: var(--gray-500); font-size: 15px; }
 .empty { text-align: center; padding: 40px; color: var(--gray-500); }
 .empty-state { grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--gray-500); }
 
-/* FOOTER */
 .footer { background: var(--primary); color: rgba(255,255,255,0.85); margin-top: 60px; }
 .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 40px; padding: 40px 32px; }
 .footer-brand h3 { color: var(--accent); font-size: 20px; font-weight: 800; margin-bottom: 12px; }
@@ -525,7 +506,6 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--white);
 .footer-links ul a:hover { color: var(--accent); }
 .footer-bottom { text-align: center; padding: 14px; background: var(--accent); color: var(--gray-900); font-size: 12px; font-weight: 600; }
 
-/* RESPONSIVE */
 @media (max-width: 768px) {
     .nav-main { padding: 10px 16px; gap: 12px; }
     .nav-bottom { padding: 0 16px; overflow-x: auto; }

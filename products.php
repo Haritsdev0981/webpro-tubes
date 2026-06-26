@@ -21,7 +21,6 @@ $catSlug   = htmlspecialchars($_GET['category'] ?? '');
         .products-page { max-width: 1200px; margin: 0 auto; padding: 28px 24px; }
         .products-layout { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: start; }
 
-        /* Filter Sidebar */
         .filter-sidebar {
             background: #fff;
             border-radius: 10px;
@@ -61,14 +60,12 @@ $catSlug   = htmlspecialchars($_GET['category'] ?? '');
             font-size: 12px; cursor: pointer; margin-top: 6px;
         }
 
-        /* Products area */
         .products-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
         .products-header h2 { font-size: 18px; font-weight: 700; color: #212529; }
         .products-count { font-size: 13px; color: #adb5bd; }
 
         .products-grid-main { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
 
-        /* Product Card */
         .product-card-main {
             background: #fff;
             border-radius: 10px;
@@ -110,7 +107,6 @@ $catSlug   = htmlspecialchars($_GET['category'] ?? '');
         }
         .btn-card-view:hover { background: #E0A800; }
 
-        /* Active category pill */
         .cat-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
         .cat-pill {
             padding: 5px 14px; border-radius: 20px;
@@ -122,7 +118,6 @@ $catSlug   = htmlspecialchars($_GET['category'] ?? '');
         }
         .cat-pill.active, .cat-pill:hover { background: #1B4332; color: #fff; border-color: #1B4332; }
 
-        /* Toast */
         .toast {
             position: fixed; bottom: 24px; right: 24px;
             background: #212529; color: #fff;
@@ -140,7 +135,6 @@ $catSlug   = htmlspecialchars($_GET['category'] ?? '');
     </style>
 </head>
 <body>
-    <!-- NAVBAR -->
     <header class="navbar">
         <div class="nav-top">
             <span class="nav-greet">Selamat Datang di Teloved!</span>
@@ -188,8 +182,6 @@ $catSlug   = htmlspecialchars($_GET['category'] ?? '');
 
     <div class="products-page">
         <div class="products-layout">
-
-            <!-- FILTER SIDEBAR -->
             <aside class="filter-sidebar">
                 <h3>Filter Produk</h3>
 
@@ -223,9 +215,7 @@ $catSlug   = htmlspecialchars($_GET['category'] ?? '');
                 <button class="btn-reset" onclick="resetFilter()">Reset</button>
             </aside>
 
-            <!-- PRODUCTS MAIN -->
             <div>
-                <!-- Category Pills -->
                 <div class="cat-pills">
                     <a href="products.php" class="cat-pill <?= !$catSlug ? 'active' : '' ?>">Semua</a>
                     <?php foreach ($categories as $cat): ?>
@@ -249,7 +239,6 @@ $catSlug   = htmlspecialchars($_GET['category'] ?? '');
         </div>
     </div>
 
-    <!-- FOOTER -->
     <footer class="footer">
         <div class="footer-grid">
             <div class="footer-brand">

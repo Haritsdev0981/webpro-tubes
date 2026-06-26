@@ -16,7 +16,6 @@ $currentUser = $isLoggedIn ? $_SESSION['user'] : null;
     <link rel="stylesheet" href="assets/css/buyer.css">
 </head>
 <body>
-    <!-- NAVBAR -->
     <header class="navbar">
         <div class="nav-top">
             <span class="nav-greet">Selamat Datang di Teloved!</span>
@@ -66,7 +65,6 @@ $currentUser = $isLoggedIn ? $_SESSION['user'] : null;
         </nav>
     </header>
 
-    <!-- HERO -->
     <section class="hero">
         <div class="hero-content">
             <h1>Preloved Marketplace </h1>
@@ -75,7 +73,6 @@ $currentUser = $isLoggedIn ? $_SESSION['user'] : null;
         </div>
     </section>
 
-    <!-- CATEGORIES -->
     <section class="categories-section">
         <h2>Jelajahi Kategori</h2>
         <div class="categories-scroll">
@@ -88,7 +85,6 @@ $currentUser = $isLoggedIn ? $_SESSION['user'] : null;
         </div>
     </section>
 
-    <!-- TRENDING -->
     <section class="products-section">
         <div class="section-header">
             <h2>Lagi Trending</h2>
@@ -99,7 +95,6 @@ $currentUser = $isLoggedIn ? $_SESSION['user'] : null;
         </div>
     </section>
 
-    <!-- TERBARU -->
     <section class="products-section">
         <div class="section-header">
             <h2>Terbaru Minggu Ini</h2>
@@ -110,7 +105,6 @@ $currentUser = $isLoggedIn ? $_SESSION['user'] : null;
         </div>
     </section>
 
-    <!-- FOOTER -->
     <footer class="footer">
         <div class="footer-grid">
             <div class="footer-brand">

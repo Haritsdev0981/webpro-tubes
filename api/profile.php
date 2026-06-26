@@ -1,10 +1,4 @@
 <?php
-// ============================================
-// API: /api/profile.php
-// GET  — get own profile
-// PUT  — update profile
-// ============================================
-
 require_once '../includes/config.php';
 
 header('Access-Control-Allow-Origin: *');
@@ -67,20 +61,15 @@ if ($method === 'PUT') {
     jsonResponse(['success' => true, 'message' => 'Profil berhasil diperbarui']);
 }
 
-// ============================================
-// DELETE — Hapus akun (Soft Delete + Anonimisasi)
-// ============================================
 if ($method === 'DELETE') {
     $userId = $authUser['id'];
     $body   = json_decode(file_get_contents('php://input'), true) ?? [];
 
-    // Validasi: password wajib dikirim
     $password = $body['password'] ?? '';
     if (empty($password)) {
         jsonResponse(['error' => 'Password wajib diisi untuk menghapus akun.'], 400);
     }
 
-    // Verifikasi password
     $stmt = $db->prepare("SELECT password FROM users WHERE id = ?");
     $stmt->execute([$userId]);
     $row = $stmt->fetch();
@@ -89,7 +78,6 @@ if ($method === 'DELETE') {
         jsonResponse(['error' => 'Password salah.'], 401);
     }
 
-    // Cek order aktif
     $stmtOrder = $db->prepare("
         SELECT COUNT(*) as total FROM checkouts
         WHERE buyer_id = ?
@@ -107,7 +95,6 @@ if ($method === 'DELETE') {
     try {
         $db->beginTransaction();
 
-        // Soft delete + anonimisasi users
         $db->prepare("
             UPDATE users
             SET is_active       = 0,
@@ -119,7 +106,6 @@ if ($method === 'DELETE') {
             WHERE id = ?
         ")->execute([$userId]);
 
-        // Anonimisasi profiles
         $db->prepare("
             UPDATE profiles
             SET bio = NULL, university = NULL, major = NULL,
@@ -127,7 +113,6 @@ if ($method === 'DELETE') {
             WHERE user_id = ?
         ")->execute([$userId]);
 
-        // Hard delete data personal murni
         $db->prepare("DELETE FROM wishlist WHERE buyer_id = ?")->execute([$userId]);
         $db->prepare("DELETE FROM feature_permissions WHERE user_id = ?")->execute([$userId]);
 

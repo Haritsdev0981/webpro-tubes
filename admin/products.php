@@ -4,7 +4,6 @@ require_once '../includes/config.php';
 $user = requireAuth('admin');
 $db = getDB();
 
-// Handle actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     if ($action === 'delete') {

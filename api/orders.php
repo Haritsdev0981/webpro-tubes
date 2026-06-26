@@ -1,13 +1,4 @@
 <?php
-// ============================================
-// API: /api/orders.php
-// Endpoint: Orders & Checkout
-// GET    /api/orders.php          — list orders (buyer: my checkouts, seller: incoming)
-// POST   /api/orders.php          — buyer creates checkout
-// PUT    /api/orders.php?id=X     — seller updates order status
-// DELETE /api/orders.php?id=X     — buyer cancels pending checkout
-// ============================================
-
 require_once '../includes/config.php';
 
 header('Access-Control-Allow-Origin: *');
@@ -20,10 +11,8 @@ $method   = $_SERVER['REQUEST_METHOD'];
 $authUser = requireApiKey();
 $db       = getDB();
 
-// ============ GET: list orders ============
 if ($method === 'GET') {
     if ($authUser['role'] === 'buyer') {
-        // Buyer sees own checkouts
         $stmt = $db->prepare("
             SELECT c.*, p.name as product_name, p.price, u.name as seller_name,
                    o.status as order_status, o.tracking_number, o.seller_note, o.id as order_id,
@@ -40,7 +29,6 @@ if ($method === 'GET') {
         $stmt->execute([$authUser['id']]);
 
     } elseif ($authUser['role'] === 'seller') {
-        // Seller sees incoming orders
         $stmt = $db->prepare("
             SELECT c.*, p.name as product_name, u.name as buyer_name, u.phone as buyer_phone,
                    o.status as order_status, o.tracking_number, o.seller_note, o.id as order_id
@@ -54,7 +42,6 @@ if ($method === 'GET') {
         $stmt->execute([$authUser['id']]);
 
     } else {
-        // Admin sees all
         $stmt = $db->query("
             SELECT c.*, p.name as product_name, b.name as buyer_name, s.name as seller_name,
                    o.status as order_status, o.id as order_id
@@ -68,8 +55,7 @@ if ($method === 'GET') {
     }
 
         $rows = $stmt->fetchAll();
- 
-    // Untuk buyer: bentuk field review_* menjadi objek 'review' agar terbaca JavaScript
+
     if ($authUser['role'] === 'buyer') {
         $rows = array_map(function($row) {
             if (!empty($row['review_id'])) {
@@ -90,13 +76,11 @@ if ($method === 'GET') {
     jsonResponse(['success' => true, 'data' => $rows]);
 }
 
-// ============ POST: buyer creates checkout ============
 if ($method === 'POST') {
     if ($authUser['role'] !== 'buyer') {
         jsonResponse(['error' => 'Hanya buyer yang bisa checkout'], 403);
     }
 
-    // Check permission
     if (!hasFeaturePermission($authUser['id'], 'checkout')) {
         jsonResponse(['error' => 'Akses fitur checkout Anda telah dibatasi oleh admin'], 403);
     }
@@ -112,7 +96,6 @@ if ($method === 'POST') {
         jsonResponse(['error' => 'Product ID dan alamat pengiriman wajib diisi'], 400);
     }
 
-    // Get product
     $pStmt = $db->prepare("SELECT * FROM products WHERE id = ? AND status = 'active'");
     $pStmt->execute([$productId]);
     $product = $pStmt->fetch();
@@ -125,17 +108,14 @@ if ($method === 'POST') {
 
     $db->beginTransaction();
     try {
-        // Create checkout
         $stmt = $db->prepare("INSERT INTO checkouts (buyer_id, product_id, seller_id, quantity, total_price, shipping_address, payment_method, note)
                                VALUES (?,?,?,?,?,?,?,?)");
         $stmt->execute([$authUser['id'], $productId, $product['seller_id'], $quantity, $totalPrice, $shippingAddr, $paymentMethod, $note]);
         $checkoutId = $db->lastInsertId();
 
-        // Create order record for seller
         $db->prepare("INSERT INTO orders (checkout_id, seller_id, status) VALUES (?,?,?)")
            ->execute([$checkoutId, $product['seller_id'], 'new']);
 
-        // Reduce stock
         $db->prepare("UPDATE products SET stock = stock - ? WHERE id = ?")->execute([$quantity, $productId]);
 
         $db->commit();
@@ -146,14 +126,12 @@ if ($method === 'POST') {
     }
 }
 
-// ============ PUT: seller updates order status ============
 if ($method === 'PUT') {
     $checkoutId = (int)($_GET['id'] ?? 0);
     if (!$checkoutId) jsonResponse(['error' => 'Checkout ID required'], 400);
 
     $body = json_decode(file_get_contents('php://input'), true) ?? [];
 
-    // Verify ownership
     $cStmt = $db->prepare("SELECT * FROM checkouts WHERE id = ?");
     $cStmt->execute([$checkoutId]);
     $checkout = $cStmt->fetch();
@@ -173,7 +151,6 @@ if ($method === 'PUT') {
         $db->prepare("UPDATE orders SET status=?, tracking_number=?, seller_note=? WHERE checkout_id=?")
            ->execute([$newStatus, $trackingNum, $sellerNote, $checkoutId]);
 
-        // Update checkout status
         $checkoutStatus = match($newStatus) {
             'accepted', 'packed' => 'confirmed',
             'shipped' => 'shipped',
@@ -186,13 +163,11 @@ if ($method === 'PUT') {
         jsonResponse(['success' => true, 'message' => 'Status order diperbarui']);
 
     } elseif ($authUser['role'] === 'buyer') {
-        // Buyer can only cancel pending
         if ($checkout['buyer_id'] != $authUser['id']) jsonResponse(['error' => 'Bukan order Anda'], 403);
         if ($checkout['status'] !== 'pending') jsonResponse(['error' => 'Order tidak bisa dibatalkan'], 400);
 
         $db->prepare("UPDATE checkouts SET status='cancelled' WHERE id=?")->execute([$checkoutId]);
         $db->prepare("UPDATE orders SET status='cancelled' WHERE checkout_id=?")->execute([$checkoutId]);
-        // Restore stock
         $db->prepare("UPDATE products SET stock = stock + ? WHERE id = ?")->execute([$checkout['quantity'], $checkout['product_id']]);
 
         jsonResponse(['success' => true, 'message' => 'Order dibatalkan']);
@@ -201,7 +176,6 @@ if ($method === 'PUT') {
     }
 }
 
-// ============ DELETE: admin delete checkout ============
 if ($method === 'DELETE') {
     if ($authUser['role'] !== 'admin') jsonResponse(['error' => 'Unauthorized'], 403);
     $id = (int)($_GET['id'] ?? 0);

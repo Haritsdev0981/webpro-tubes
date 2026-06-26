@@ -28,8 +28,8 @@
 Edit file `includes/config.php`:
 ```php
 define('DB_HOST', 'localhost');
-define('DB_USER', 'root');       // sesuaikan username MySQL
-define('DB_PASS', '');           // sesuaikan password MySQL
+define('DB_USER', 'root');  
+define('DB_PASS', '');         
 define('DB_NAME', 'teloved');
 define('BASE_URL', 'http://localhost/teloved');
 ```

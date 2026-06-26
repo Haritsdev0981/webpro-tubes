@@ -38,7 +38,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$name, $email, $hashed, $role, $apiKey]);
             $userId = $db->lastInsertId();
 
-            // Default feature permissions for buyer
             if ($role === 'buyer') {
                 foreach (['wishlist', 'checkout', 'review'] as $feat) {
                     $fp = $db->prepare("INSERT INTO feature_permissions (user_id, feature_name, is_allowed) VALUES (?, ?, 1)");
@@ -46,7 +45,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            // Create empty profile
             $db->prepare("INSERT INTO profiles (user_id) VALUES (?)")->execute([$userId]);
 
             $success = 'Registrasi berhasil! Silakan login.';

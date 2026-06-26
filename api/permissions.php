@@ -1,12 +1,4 @@
 <?php
-// ============================================
-// API: /api/permissions.php
-// GET     — list all permissions or filter by user_id
-// POST    — create new permission
-// PUT     — update existing permission
-// DELETE  — delete permission by id
-// ============================================
-
 require_once '../includes/config.php';
 
 header('Access-Control-Allow-Origin: *');
@@ -32,7 +24,6 @@ function forbidden($message) {
     jsonResponse(['success' => false, 'error' => $message], 403);
 }
 
-// only admin users are allowed to manage feature permissions
 if ($authUser['role'] !== 'admin') {
     forbidden('Hanya admin yang dapat mengakses endpoint ini');
 }

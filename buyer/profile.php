@@ -17,12 +17,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $newPass    = $_POST['new_password'] ?? '';
     $confirm    = $_POST['confirm_password'] ?? '';
 
-    // Update users table
     if ($name) {
         $db->prepare("UPDATE users SET name=?, phone=? WHERE id=?")->execute([$name, $phone, $userId]);
     }
 
-    // Upsert profile
     $check = $db->prepare("SELECT id FROM profiles WHERE user_id=?");
     $check->execute([$userId]);
     if ($check->fetch()) {
@@ -33,7 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
            ->execute([$userId, $bio, $university, $major, $whatsapp, $instagram]);
     }
 
-    // Change password
     if ($newPass) {
         if (strlen($newPass) < 6) {
             $error = 'Password minimal 6 karakter.';
@@ -46,7 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!isset($error)) {
-        // Refresh session
         $newUser = $db->prepare("SELECT * FROM users WHERE id=?");
         $newUser->execute([$userId]);
         $_SESSION['user'] = $newUser->fetch();
@@ -55,7 +51,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Load profile
 $profile = $db->prepare("SELECT * FROM profiles WHERE user_id=?");
 $profile->execute([$userId]);
 $profile = $profile->fetch();
@@ -85,7 +80,6 @@ $profile = $profile->fetch();
         .success-banner { background: #EAFAF1; border: 1px solid #A9DFBF; color: #1E8449; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; font-weight: 500; }
         .error-banner { background: #FDEDEC; border: 1px solid #F5C6CB; color: #DC3545; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; }
 
-        /* ── Danger Zone ──────────────────────────────── */
         .danger-zone {
             margin-top: 32px;
             border: 1.5px solid #f5c6cb;
@@ -108,7 +102,6 @@ $profile = $profile->fetch();
         }
         .btn-danger:hover { background: #b02a37; }
 
-        /* ── Modal Hapus Akun ─────────────────────────── */
         .modal-overlay {
             display: none; position: fixed; inset: 0;
             background: rgba(0,0,0,0.5);
@@ -180,7 +173,6 @@ $profile = $profile->fetch();
                 <?php endif; ?>
 
                 <?php
-                // Pesan error dari proses hapus akun
                 if (isset($_GET['delete_error'])):
                     $deleteMsg = match($_GET['delete_error']) {
                         'password_empty'  => '❌ Password wajib diisi untuk menghapus akun.',
@@ -254,7 +246,6 @@ $profile = $profile->fetch();
                     </div>
                 </form>
 
-                <!-- ── Danger Zone ───────────────────────────────── -->
                 <div class="danger-zone">
                     <div class="danger-zone-title">⚠️ Zona Berbahaya</div>
                     <p>
@@ -267,11 +258,10 @@ $profile = $profile->fetch();
                     </button>
                 </div>
 
-            </div><!-- /.profile-form -->
-        </div><!-- /.profile-card -->
-    </div><!-- /.profile-page -->
+            </div>
+        </div>
+    </div>
 
-    <!-- ── Modal Konfirmasi Hapus Akun ───────────────────── -->
     <div class="modal-overlay" id="modalDelete">
         <div class="modal-box">
             <div class="modal-head">
@@ -321,7 +311,6 @@ $profile = $profile->fetch();
             document.getElementById('modalDelete').style.display = 'none';
         }
 
-        // Aktifkan tombol submit hanya setelah checkbox konfirmasi dicentang.
         function checkDeleteReady() {
             const isChecked = document.getElementById('checkConfirm').checked;
             document.getElementById('btnConfirmDelete').disabled = !isChecked;
@@ -329,7 +318,6 @@ $profile = $profile->fetch();
 
         document.getElementById('checkConfirm').addEventListener('change', checkDeleteReady);
 
-        // Tutup modal jika klik di luar area modal
         document.getElementById('modalDelete').addEventListener('click', function(e) {
             if (e.target === this) closeDeleteModal();
         });

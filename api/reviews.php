@@ -1,12 +1,4 @@
 <?php
-// ============================================
-// API: /api/reviews.php
-// GET  ?product_id=X — get product reviews (public)
-// POST              — create review (buyer)
-// PUT  ?id=X        — edit review (buyer)
-// DELETE ?id=X      — delete review (buyer)
-// ============================================
-
 require_once '../includes/config.php';
 
 header('Access-Control-Allow-Origin: *');
@@ -18,7 +10,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
 $method = $_SERVER['REQUEST_METHOD'];
 $db = getDB();
 
-// GET is public
 if ($method === 'GET') {
     $productId = (int)($_GET['product_id'] ?? 0);
     if (!$productId) jsonResponse(['error' => 'product_id required'], 400);
@@ -39,7 +30,6 @@ if ($method === 'GET') {
     jsonResponse(['success' => true, 'data' => $reviews, 'stats' => $stats]);
 }
 
-// All other methods need auth
 $authUser = requireApiKey();
 
 if ($method === 'POST') {
@@ -58,14 +48,12 @@ if ($method === 'POST') {
         jsonResponse(['error' => 'product_id dan rating (1-5) wajib diisi'], 400);
     }
 
-    // Verify buyer has completed purchase
     $verifyStmt = $db->prepare("SELECT id FROM checkouts WHERE buyer_id=? AND product_id=? AND status='completed'");
     $verifyStmt->execute([$authUser['id'], $productId]);
     if (!$verifyStmt->fetch()) {
         jsonResponse(['error' => 'Anda hanya bisa mengulas produk yang sudah dibeli dan selesai'], 403);
     }
 
-    // Check duplicate
     $dup = $db->prepare("SELECT id FROM reviews WHERE buyer_id=? AND product_id=?");
     $dup->execute([$authUser['id'], $productId]);
     if ($dup->fetch()) jsonResponse(['error' => 'Anda sudah mengulas produk ini'], 409);
@@ -85,7 +73,6 @@ if ($method === 'PUT') {
     if (!$review) jsonResponse(['error' => 'Ulasan tidak ditemukan'], 404);
     if ($review['buyer_id'] != $authUser['id']) jsonResponse(['error' => 'Bukan ulasan Anda'], 403);
 
-    // ✅ TAMBAHAN: cek apakah sudah pernah diedit
     if ($review['is_edited'] == 1) {
         jsonResponse(['error' => 'Ulasan hanya bisa diubah satu kali'], 403);
     }
@@ -95,7 +82,6 @@ if ($method === 'PUT') {
     $comment = trim($body['comment'] ?? $review['comment']);
     if ($rating < 1 || $rating > 5) jsonResponse(['error' => 'Rating harus 1-5'], 400);
 
-    // ✅ TAMBAHAN: set is_edited = 1 setelah berhasil update
     $db->prepare("UPDATE reviews SET rating=?, comment=?, is_edited=1 WHERE id=?")
        ->execute([$rating, $comment, $id]);
 

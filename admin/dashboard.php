@@ -5,7 +5,6 @@ $user = requireAuth('admin');
 
 $db = getDB();
 
-// Stats
 $totalUsers    = $db->query("SELECT COUNT(*) FROM users WHERE role != 'admin'")->fetchColumn();
 $totalProducts = $db->query("SELECT COUNT(*) FROM products")->fetchColumn();
 $totalOrders   = $db->query("SELECT COUNT(*) FROM checkouts")->fetchColumn();

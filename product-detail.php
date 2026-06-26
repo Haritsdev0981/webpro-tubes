@@ -99,7 +99,6 @@ $currentUser = $isLoggedIn ? $_SESSION['user'] : null;
         }
         .btn-checkout-full:hover { background: #2D6A4F; }
 
-        /* Reviews */
         .reviews-section h2 { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
         .review-card { background: #fff; border: 1px solid #dee2e6; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
         .review-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
@@ -154,7 +153,6 @@ $currentUser = $isLoggedIn ? $_SESSION['user'] : null;
         </div>
 
         <div class="detail-grid">
-            <!-- Image -->
             <div class="product-image-area">
                 <img
                     src="<?= htmlspecialchars($productImage) ?>"
@@ -168,7 +166,6 @@ $currentUser = $isLoggedIn ? $_SESSION['user'] : null;
                     ">
             </div>
 
-            <!-- Info -->
             <div class="detail-info">
                 <?php if ($product['cat_name']): ?>
                 <div class="detail-cat"><?= htmlspecialchars($product['cat_name']) ?></div>
@@ -212,7 +209,6 @@ $currentUser = $isLoggedIn ? $_SESSION['user'] : null;
             </div>
         </div>
 
-        <!-- Reviews -->
         <div class="reviews-section">
             <h2>Ulasan Pembeli (<?= count($reviews) ?>)</h2>
             <?php if (empty($reviews)): ?>
@@ -232,7 +228,6 @@ $currentUser = $isLoggedIn ? $_SESSION['user'] : null;
         </div>
     </div>
 
-    <!-- Checkout Modal -->
     <div class="modal-overlay" id="modalCheckout" style="display:none">
         <div class="modal-box">
             <div class="modal-head">

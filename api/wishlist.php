@@ -1,11 +1,4 @@
 <?php
-// ============================================
-// API: /api/wishlist.php
-// GET    — list buyer's wishlist
-// POST   — add to wishlist
-// DELETE ?id=X — remove from wishlist
-// ============================================
-
 require_once '../includes/config.php';
 
 header('Access-Control-Allow-Origin: *');
@@ -22,12 +15,10 @@ if ($authUser['role'] !== 'buyer') {
     jsonResponse(['error' => 'Fitur wishlist hanya untuk buyer'], 403);
 }
 
-// Check permission
 if (!hasFeaturePermission($authUser['id'], 'wishlist')) {
     jsonResponse(['error' => 'Akses fitur wishlist Anda telah dibatasi oleh admin'], 403);
 }
 
-// GET: list wishlist
 if ($method === 'GET') {
     $stmt = $db->prepare("
         SELECT w.id, w.created_at, p.id as product_id, p.name, p.price,
@@ -46,18 +37,15 @@ if ($method === 'GET') {
     jsonResponse(['success' => true, 'data' => $stmt->fetchAll()]);
 }
 
-// POST: add to wishlist
 if ($method === 'POST') {
     $body = json_decode(file_get_contents('php://input'), true) ?? [];
     $productId = (int)($body['product_id'] ?? 0);
     if (!$productId) jsonResponse(['error' => 'Product ID wajib diisi'], 400);
 
-    // Check product exists
     $pCheck = $db->prepare("SELECT id FROM products WHERE id = ? AND status = 'active'");
     $pCheck->execute([$productId]);
     if (!$pCheck->fetch()) jsonResponse(['error' => 'Produk tidak ditemukan'], 404);
 
-    // Check duplicate
     $dup = $db->prepare("SELECT id FROM wishlist WHERE buyer_id = ? AND product_id = ?");
     $dup->execute([$authUser['id'], $productId]);
     if ($dup->fetch()) jsonResponse(['error' => 'Produk sudah ada di wishlist'], 409);
@@ -66,7 +54,6 @@ if ($method === 'POST') {
     jsonResponse(['success' => true, 'message' => 'Ditambahkan ke wishlist'], 201);
 }
 
-// DELETE: remove from wishlist
 if ($method === 'DELETE') {
     $id = (int)($_GET['id'] ?? 0);
     if (!$id) jsonResponse(['error' => 'Wishlist ID required'], 400);

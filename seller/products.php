@@ -7,7 +7,6 @@ $db = getDB();
 $categories = $db->query("SELECT * FROM categories ORDER BY name")->fetchAll();
 $sellerId = $user['id'];
 
-// GET: fetch products via JS (API), but also show page shell
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -45,7 +44,6 @@ $sellerId = $user['id'];
         </div>
     </div>
 
-    <!-- ADD PRODUCT MODAL -->
     <div class="modal-overlay" id="modalAdd">
         <div class="modal-box">
             <div class="modal-head">
@@ -110,7 +108,6 @@ $sellerId = $user['id'];
         </div>
     </div>
 
-    <!-- EDIT PRODUCT MODAL -->
     <div class="modal-overlay" id="modalEdit">
         <div class="modal-box">
             <div class="modal-head">
@@ -199,7 +196,7 @@ $sellerId = $user['id'];
             const grid = document.getElementById('products-grid');
             grid.innerHTML = '<div class="loading">Memuat produk...</div>';
             try {
-                const res = await fetch(`${API_BASE}/products.php?t=${Date.now()}`, {  // ← tambah ?t=timestamp
+                const res = await fetch(`${API_BASE}/products.php?t=${Date.now()}`, {
                     headers: { 'X-API-Key': API_KEY }
                 });
                 const data = await res.json();
@@ -263,7 +260,6 @@ $sellerId = $user['id'];
             return d.innerHTML;
         }
 
-        // Preview gambar sebelum upload
         function setupImagePreview(inputId, previewId, max = 3) {
             document.getElementById(inputId).addEventListener('change', function() {
                 const preview = document.getElementById(previewId);
@@ -282,7 +278,6 @@ $sellerId = $user['id'];
             });
         }
 
-        // Jalankan setup preview untuk kedua form
         setupImagePreview('imagesAdd', 'previewAdd');
         setupImagePreview('imagesEdit', 'previewEdit');
 
@@ -296,7 +291,6 @@ $sellerId = $user['id'];
             document.getElementById('edit_status').value = p.status;
             document.getElementById('edit_description').value = p.description || '';
 
-            // === BARU: tampilkan gambar lama di preview edit ===
             const previewEdit = document.getElementById('previewEdit');
             previewEdit.innerHTML = '';
             try {
@@ -309,12 +303,10 @@ $sellerId = $user['id'];
                     previewEdit.appendChild(div);
                 });
             } catch(e) {}
-            // === Akhir BARU ===
 
             openModal('modalEdit');
         }
 
-        // CREATE product
         document.getElementById('formAdd').addEventListener('submit', async function(e) {
             e.preventDefault();
             const fd = new FormData(this);
@@ -338,13 +330,12 @@ $sellerId = $user['id'];
             }
         });
 
-        // UPDATE product
         document.getElementById('formEdit').addEventListener('submit', async function(e) {
             e.preventDefault();
             const id = document.getElementById('edit_id').value;
 
             const fd = new FormData();
-            fd.append('_method', 'PUT');   // ← method spoofing agar PHP bisa baca $_FILES
+            fd.append('_method', 'PUT');
             fd.append('name', document.getElementById('edit_name').value);
             fd.append('price', document.getElementById('edit_price').value);
             fd.append('stock', document.getElementById('edit_stock').value);
@@ -358,7 +349,7 @@ $sellerId = $user['id'];
 
             try {
                 const res = await fetch(`${API_BASE}/products.php?id=${id}`, {
-                    method: 'POST',   // ← ganti PUT menjadi POST
+                    method: 'POST',
                     headers: { 'X-API-Key': API_KEY },
                     body: fd
                 });

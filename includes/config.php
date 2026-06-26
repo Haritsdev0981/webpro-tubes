@@ -1,15 +1,10 @@
 <?php
-// ============================================
-// TELOVED - Database Configuration
-// ============================================
-
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_NAME', 'teloved');
 define('BASE_URL', 'http://localhost/teloved');
 
-// App config
 define('APP_NAME', 'Teloved');
 define('UPLOAD_DIR', __DIR__ . '/../assets/uploads/');
 define('UPLOAD_URL', BASE_URL . '/assets/uploads/');
@@ -35,7 +30,6 @@ function getDB() {
     return $pdo;
 }
 
-// Helper: JSON response
 function jsonResponse($data, $status = 200) {
     http_response_code($status);
     header('Content-Type: application/json');
@@ -46,7 +40,6 @@ function jsonResponse($data, $status = 200) {
     exit;
 }
 
-// Helper: API Key Auth
 function requireApiKey() {
     $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? $_GET['api_key'] ?? '';
     if (empty($apiKey)) {
@@ -62,17 +55,15 @@ function requireApiKey() {
     return $user;
 }
 
-// Helper: Check feature permission
 function hasFeaturePermission($userId, $featureName) {
     $db = getDB();
     $stmt = $db->prepare("SELECT is_allowed FROM feature_permissions WHERE user_id = ? AND feature_name = ?");
     $stmt->execute([$userId, $featureName]);
     $row = $stmt->fetch();
-    if (!$row) return true; // default allow if not set
+    if (!$row) return true;
     return (bool) $row['is_allowed'];
 }
 
-// Helper: Flash messages
 function setFlash($type, $message) {
     $_SESSION['flash'] = ['type' => $type, 'message' => $message];
 }
@@ -86,7 +77,6 @@ function getFlash() {
     return null;
 }
 
-// Helper: Auth check for full PHP pages
 function requireAuth($role = null) {
     if (!isset($_SESSION['user'])) {
         header('Location: ' . BASE_URL . '/login.php');
@@ -99,7 +89,6 @@ function requireAuth($role = null) {
     return $_SESSION['user'];
 }
 
-// Format Rupiah
 function formatRupiah($amount) {
     return 'Rp ' . number_format($amount, 0, ',', '.');
 }

@@ -33,7 +33,6 @@ $user = requireAuth('buyer');
         </div>
     </div>
 
-    <!-- Review Modal -->
     <div class="modal-overlay" id="modalReview" style="display:none">
         <div class="modal-box">
             <div class="modal-head">
@@ -64,7 +63,6 @@ $user = requireAuth('buyer');
         </div>
     </div>
 
-    <!-- Edit Review Modal -->
 <div class="modal-overlay" id="modalEditReview" style="display:none">
     <div class="modal-box">
         <div class="modal-head">
@@ -252,10 +250,9 @@ async function submitEditReview() {
             showFlash('success', '✏️ Ulasan berhasil diperbarui!');
             loadOrders();
         } else {
-            // Jika sudah pernah diedit, tampilkan alert seperti di gambar
             showFlash('error', data.error || 'Gagal memperbarui ulasan.');
             closeEditReview();
-            loadOrders(); // refresh agar tombol berubah jadi "tidak bisa diedit"
+            loadOrders();
         }
     } catch(e) { showFlash('error', 'Terjadi kesalahan.'); }
 }

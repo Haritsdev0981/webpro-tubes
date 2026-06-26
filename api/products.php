@@ -1,13 +1,4 @@
 <?php
-// ============================================
-// API: /api/products.php
-// Endpoint 1: GET /api/products.php       — list seller's products
-// Endpoint 2: POST /api/products.php      — create product
-// Endpoint 3: PUT /api/products.php?id=X  — update product
-// Endpoint 4: DELETE /api/products.php?id=X — delete product
-// Endpoint 5: GET /api/products.php?public=1 — public product listing (buyer)
-// ============================================
-
 require_once '../includes/config.php';
 
 header('Access-Control-Allow-Origin: *');
@@ -19,7 +10,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
 $method = $_SERVER['REQUEST_METHOD'];
 $db = getDB();
 
-// Public product listing (no auth needed)
 if ($method === 'GET' && isset($_GET['public'])) {
     $search   = trim($_GET['search'] ?? '');
     $category = trim($_GET['category'] ?? '');
@@ -52,10 +42,8 @@ if ($method === 'GET' && isset($_GET['public'])) {
     jsonResponse(['success' => true, 'data' => $products]);
 }
 
-// All protected routes need API key
 $authUser = requireApiKey();
 
-// ============ GET: list own products (seller) ============
 if ($method === 'GET') {
     if ($authUser['role'] !== 'seller' && $authUser['role'] !== 'admin') {
         jsonResponse(['error' => 'Only sellers can access this'], 403);
@@ -73,8 +61,6 @@ if ($method === 'GET') {
     jsonResponse(['success' => true, 'data' => $stmt->fetchAll()]);
 }
 
-// ============ PUT: update product ============
-// Gunakan method spoofing: POST + _method=PUT karena PHP tidak baca $_FILES pada PUT
 if ($method === 'POST' && ($_POST['_method'] ?? '') === 'PUT') {
     $id = (int)($_GET['id'] ?? 0);
     if (!$id) jsonResponse(['error' => 'Product ID required'], 400);
@@ -88,7 +74,6 @@ if ($method === 'POST' && ($_POST['_method'] ?? '') === 'PUT') {
         jsonResponse(['error' => 'Bukan produk Anda'], 403);
     }
 
-    // Baca dari $_POST (bukan php://input, karena multipart/form-data)
     $name          = trim($_POST['name'] ?? $product['name']);
     $price         = (float)($_POST['price'] ?? $product['price']);
     $description   = trim($_POST['description'] ?? $product['description']);
@@ -99,7 +84,6 @@ if ($method === 'POST' && ($_POST['_method'] ?? '') === 'PUT') {
 
     if (!in_array($status, ['active','inactive','sold'])) $status = 'active';
 
-    // Handle upload gambar baru
     $existingImages = json_decode($product['images'], true) ?? ['no-image.png'];
 
     if (!empty($_FILES['images']['name'][0])) {
@@ -122,7 +106,6 @@ if ($method === 'POST' && ($_POST['_method'] ?? '') === 'PUT') {
         }
 
         if (!empty($newImages)) {
-            // Hapus file lama di server
             foreach ($existingImages as $oldImg) {
                 if ($oldImg !== 'no-image.png') {
                     @unlink(UPLOAD_DIR . 'products/' . $oldImg);
@@ -144,7 +127,6 @@ if ($method === 'POST' && ($_POST['_method'] ?? '') === 'PUT') {
     jsonResponse(['success' => true, 'message' => 'Produk berhasil diperbarui']);
 }
 
-// Blok PUT lama (tetap ada untuk jaga kompatibilitas — hanya untuk request JSON tanpa file)
 if ($method === 'PUT') {
     $id = (int)($_GET['id'] ?? 0);
     if (!$id) jsonResponse(['error' => 'Product ID required'], 400);
@@ -178,7 +160,6 @@ if ($method === 'PUT') {
     jsonResponse(['success' => true, 'message' => 'Produk berhasil diperbarui']);
 }
 
-// ============ POST: create product ============
 if ($method === 'POST') {
     if ($authUser['role'] !== 'seller') {
         jsonResponse(['error' => 'Only sellers can add products'], 403);
@@ -195,7 +176,6 @@ if ($method === 'POST') {
         jsonResponse(['error' => 'Nama produk dan harga wajib diisi'], 400);
     }
 
-    // === BARU: Handle upload gambar ===
     $imageList = ['no-image.png'];
 
     if (!empty($_FILES['images']['name'][0])) {
@@ -203,7 +183,7 @@ if ($method === 'POST') {
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
         $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-        $maxSize      = 2 * 1024 * 1024; // 2MB per file
+        $maxSize      = 2 * 1024 * 1024;
         $imageList    = [];
 
         foreach ($_FILES['images']['tmp_name'] as $i => $tmpName) {
@@ -220,7 +200,6 @@ if ($method === 'POST') {
 
         if (empty($imageList)) $imageList = ['no-image.png'];
     }
-    // === Akhir handle upload ===
 
     $stmt = $db->prepare("INSERT INTO products 
         (seller_id, category_id, name, description, price, condition_type, stock, images)
@@ -234,8 +213,6 @@ if ($method === 'POST') {
     jsonResponse(['success' => true, 'message' => 'Produk berhasil ditambahkan', 'id' => $id], 201);
 }
 
-
-// ============ DELETE: delete product ============
 if ($method === 'DELETE') {
     $id = (int)($_GET['id'] ?? 0);
     if (!$id) jsonResponse(['error' => 'Product ID required'], 400);
