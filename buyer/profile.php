@@ -84,6 +84,72 @@ $profile = $profile->fetch();
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .success-banner { background: #EAFAF1; border: 1px solid #A9DFBF; color: #1E8449; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; font-weight: 500; }
         .error-banner { background: #FDEDEC; border: 1px solid #F5C6CB; color: #DC3545; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; }
+
+        /* ── Danger Zone ──────────────────────────────── */
+        .danger-zone {
+            margin-top: 32px;
+            border: 1.5px solid #f5c6cb;
+            border-radius: 10px;
+            padding: 20px 24px;
+            background: #fff8f8;
+        }
+        .danger-zone-title {
+            font-size: 13px; font-weight: 700;
+            color: #DC3545; text-transform: uppercase;
+            letter-spacing: 0.5px; margin-bottom: 8px;
+        }
+        .danger-zone p {
+            font-size: 13px; color: #6c757d; margin-bottom: 16px; line-height: 1.5;
+        }
+        .btn-danger {
+            background: #DC3545; color: #fff; border: none;
+            padding: 10px 20px; border-radius: 8px;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+        }
+        .btn-danger:hover { background: #b02a37; }
+
+        /* ── Modal Hapus Akun ─────────────────────────── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal-box {
+            background: #fff; border-radius: 12px;
+            padding: 28px; width: 100%; max-width: 440px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            margin: 16px;
+        }
+        .modal-head {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 16px;
+        }
+        .modal-head h3 { font-size: 16px; font-weight: 700; color: #DC3545; }
+        .modal-head button {
+            background: none; border: none; font-size: 20px;
+            cursor: pointer; color: #adb5bd; line-height: 1;
+        }
+        .modal-warning {
+            background: #fff3cd; border: 1px solid #ffc107;
+            border-radius: 8px; padding: 12px 14px;
+            font-size: 13px; color: #856404; margin-bottom: 16px;
+            line-height: 1.5;
+        }
+        .modal-actions {
+            display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;
+        }
+        .btn-secondary {
+            background: #f8f9fa; color: #495057; border: 1px solid #dee2e6;
+            padding: 10px 18px; border-radius: 8px;
+            font-size: 13px; font-weight: 500; cursor: pointer;
+        }
+        .btn-secondary:hover { background: #e9ecef; }
+        .checkbox-row {
+            display: flex; align-items: flex-start; gap: 10px;
+            font-size: 13px; color: #495057; margin-bottom: 14px;
+            line-height: 1.4;
+        }
+        .checkbox-row input[type="checkbox"] { margin-top: 2px; flex-shrink: 0; }
     </style>
 </head>
 <body>
@@ -111,6 +177,21 @@ $profile = $profile->fetch();
                 <?php endif; ?>
                 <?php if (isset($error)): ?>
                 <div class="error-banner"><?= htmlspecialchars($error) ?></div>
+                <?php endif; ?>
+
+                <?php
+                // Pesan error dari proses hapus akun
+                if (isset($_GET['delete_error'])):
+                    $deleteMsg = match($_GET['delete_error']) {
+                        'password_empty'  => '❌ Password wajib diisi untuk menghapus akun.',
+                        'password_wrong'  => '❌ Password yang kamu masukkan salah.',
+                        'confirm'         => '❌ Kamu harus mencentang persetujuan penghapusan.',
+                        'active_orders'   => '❌ Tidak bisa menghapus akun. Kamu masih memiliki ' . ($_GET['count'] ?? '') . ' order yang belum selesai.',
+                        'server'          => '❌ Terjadi kesalahan pada server. Silakan coba lagi.',
+                        default           => '❌ Terjadi kesalahan. Silakan coba lagi.',
+                    };
+                ?>
+                <div class="error-banner"><?= $deleteMsg ?></div>
                 <?php endif; ?>
 
                 <form method="POST">
@@ -172,8 +253,89 @@ $profile = $profile->fetch();
                         <button type="submit" class="btn-primary">💾 Simpan Perubahan</button>
                     </div>
                 </form>
+
+                <!-- ── Danger Zone ───────────────────────────────── -->
+                <div class="danger-zone">
+                    <div class="danger-zone-title">⚠️ Zona Berbahaya</div>
+                    <p>
+                        Menghapus akun akan menonaktifkan aksesmu ke Teloved secara permanen.
+                        Wishlist dan data pribadimu akan dihapus. Riwayat transaksi tetap disimpan
+                        untuk keperluan seller yang pernah bertransaksi denganmu.
+                    </p>
+                    <button type="button" class="btn-danger" onclick="openDeleteModal()">
+                        🗑️ Hapus Akun
+                    </button>
+                </div>
+
+            </div><!-- /.profile-form -->
+        </div><!-- /.profile-card -->
+    </div><!-- /.profile-page -->
+
+    <!-- ── Modal Konfirmasi Hapus Akun ───────────────────── -->
+    <div class="modal-overlay" id="modalDelete">
+        <div class="modal-box">
+            <div class="modal-head">
+                <h3>🗑️ Hapus Akun Secara Permanen</h3>
+                <button onclick="closeDeleteModal()">✕</button>
             </div>
+
+            <div class="modal-warning">
+                ⚠️ <strong>Tindakan ini tidak bisa dibatalkan.</strong><br>
+                Akun kamu akan dinonaktifkan dan data pribadi akan dihapus permanen.
+            </div>
+
+            <form method="POST" action="delete_account.php" id="formDelete">
+                <div class="form-group">
+                    <label>Masukkan Password Kamu</label>
+                    <input type="password" name="password" id="deletePassword"
+                           placeholder="Password saat ini" autocomplete="current-password">
+                </div>
+
+                <div class="checkbox-row">
+                    <input type="checkbox" name="confirm_delete" value="yes" id="checkConfirm">
+                    <label for="checkConfirm">
+                        Saya mengerti bahwa akun saya akan dihapus dan tindakan ini
+                        <strong>tidak bisa dipulihkan</strong>.
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeDeleteModal()">Batal</button>
+                    <button type="submit" class="btn-danger" id="btnConfirmDelete" disabled>
+                        Ya, Hapus Akun Saya
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+
+    <script>
+        function openDeleteModal() {
+            document.getElementById('modalDelete').style.display = 'flex';
+            document.getElementById('deletePassword').value = '';
+            document.getElementById('checkConfirm').checked  = false;
+            document.getElementById('btnConfirmDelete').disabled = true;
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('modalDelete').style.display = 'none';
+        }
+
+        // Aktifkan tombol submit hanya jika checkbox dicentang DAN password diisi
+        function checkDeleteReady() {
+            const hasPassword = document.getElementById('deletePassword').value.trim() !== '';
+            const isChecked   = document.getElementById('checkConfirm').checked;
+            document.getElementById('btnConfirmDelete').disabled = !(hasPassword && isChecked);
+        }
+
+        document.getElementById('deletePassword').addEventListener('input', checkDeleteReady);
+        document.getElementById('checkConfirm').addEventListener('change', checkDeleteReady);
+
+        // Tutup modal jika klik di luar area modal
+        document.getElementById('modalDelete').addEventListener('click', function(e) {
+            if (e.target === this) closeDeleteModal();
+        });
+    </script>
+
 </body>
 </html>
