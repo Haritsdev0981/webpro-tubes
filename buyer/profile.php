@@ -321,14 +321,12 @@ $profile = $profile->fetch();
             document.getElementById('modalDelete').style.display = 'none';
         }
 
-        // Aktifkan tombol submit hanya jika checkbox dicentang DAN password diisi
+        // Aktifkan tombol submit hanya setelah checkbox konfirmasi dicentang.
         function checkDeleteReady() {
-            const hasPassword = document.getElementById('deletePassword').value.trim() !== '';
-            const isChecked   = document.getElementById('checkConfirm').checked;
-            document.getElementById('btnConfirmDelete').disabled = !(hasPassword && isChecked);
+            const isChecked = document.getElementById('checkConfirm').checked;
+            document.getElementById('btnConfirmDelete').disabled = !isChecked;
         }
 
-        document.getElementById('deletePassword').addEventListener('input', checkDeleteReady);
         document.getElementById('checkConfirm').addEventListener('change', checkDeleteReady);
 
         // Tutup modal jika klik di luar area modal

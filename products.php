@@ -307,6 +307,20 @@ $catSlug   = htmlspecialchars($_GET['category'] ?? '');
             return 'Rp ' + Number(num).toLocaleString('id-ID');
         }
 
+        function getProductImage(p) {
+            const placeholder = 'assets/uploads/placeholder/no-image.jpeg';
+            if (!p.images) return placeholder;
+            try {
+                const images = JSON.parse(p.images);
+                if (!Array.isArray(images) || !images.length) return placeholder;
+                const firstImage = images[0];
+                if (!firstImage || typeof firstImage !== 'string') return placeholder;
+                return `assets/uploads/products/${firstImage}`;
+            } catch (err) {
+                return placeholder;
+            }
+        }
+
         async function loadProducts() {
             const params = new URLSearchParams({ public: 1 });
             if (INIT_SEARCH)   params.set('search', INIT_SEARCH);
@@ -337,8 +351,9 @@ $catSlug   = htmlspecialchars($_GET['category'] ?? '');
                 <div class="product-card-main">
                     <div class="product-card-img" onclick="window.location.href='product-detail.php?id=${p.id}'">
                         <img
-                            src="${p.images ? 'assets/uploads/products/' + JSON.parse(p.images)[0] : 'assets/uploads/products/no-image.png'}"
+                            src="${getProductImage(p)}"
                             alt="${escHtml(p.name)}"
+                            onerror="this.onerror=null;this.src='assets/uploads/placeholder/no-image.jpeg';"
                             style="width:100%;height:100%;object-fit:cover;">
                     </div>
                     <div class="product-card-body">

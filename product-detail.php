@@ -21,15 +21,17 @@ $stmt = $db->prepare("
 $stmt->execute([$productId]);
 $product = $stmt->fetch();
 
-$productImages = json_decode($product['images'], true);
-
-$productImage = !empty($productImages[0])
-    ? 'assets/uploads/products/' . $productImages[0]
-    : 'assets/uploads/productsno-image.png';
-
 if (!$product) {
     header('Location: products.php');
     exit;
+}
+
+$productImage = 'assets/uploads/placeholder/no-image.jpeg';
+if (!empty($product['images'])) {
+    $productImages = json_decode($product['images'], true);
+    if (is_array($productImages) && !empty($productImages[0]) && is_string($productImages[0])) {
+        $productImage = 'assets/uploads/products/' . $productImages[0];
+    }
 }
 
 $reviews = $db->prepare("SELECT r.*, u.name as buyer_name FROM reviews r JOIN users u ON u.id = r.buyer_id WHERE r.product_id = ? ORDER BY r.created_at DESC LIMIT 10");
@@ -155,8 +157,9 @@ $currentUser = $isLoggedIn ? $_SESSION['user'] : null;
             <!-- Image -->
             <div class="product-image-area">
                 <img
-                    src="<?= $productImage ?>"
+                    src="<?= htmlspecialchars($productImage) ?>"
                     alt="<?= htmlspecialchars($product['name']) ?>"
+                    onerror="this.onerror=null;this.src='assets/uploads/placeholder/no-image.jpeg';"
                     style="
                         width:100%;
                         height:100%;

@@ -83,6 +83,7 @@ $user = requireAuth('buyer');
     <script>
         const API_KEY = '<?= htmlspecialchars($user['api_key']) ?>';
         const UPLOAD_URL = '<?= UPLOAD_URL ?>';
+        const PLACEHOLDER_IMAGE = UPLOAD_URL + 'placeholder/no-image.jpeg';
         let currentProductId = null;
 
         function showFlash(type, msg) {
@@ -128,13 +129,15 @@ $user = requireAuth('buyer');
 
                 container.innerHTML = items.map(item => {
                     const imageFile = getWishlistImage(item.images);
-                    const imageHtml = imageFile ? `
-                        <img src="${UPLOAD_URL + imageFile}" alt="${escHtml(item.name)}" style="width:100%;height:100%;object-fit:cover;" />
-                    ` : '<div class="thumb-placeholder">📦</div>';
+                    const imageSrc = imageFile ? UPLOAD_URL + 'products/' + imageFile : PLACEHOLDER_IMAGE;
                     return `
                         <div class="product-card" style="cursor:default">
                             <div class="product-thumb">
-                                ${imageHtml}
+                                <img
+                                    src="${imageSrc}"
+                                    alt="${escHtml(item.name)}"
+                                    onerror="this.onerror=null;this.src='${PLACEHOLDER_IMAGE}';"
+                                    style="width:100%;height:100%;object-fit:cover;" />
                                 <span class="condition-badge">${escHtml(item.condition_type)}</span>
                             </div>
                             <div class="product-body">

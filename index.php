@@ -153,14 +153,29 @@ $currentUser = $isLoggedIn ? $_SESSION['user'] : null;
             return 'Rp ' + Number(num).toLocaleString('id-ID');
         }
 
+        function getProductImage(p) {
+            const placeholder = 'assets/uploads/placeholder/no-image.jpeg';
+            if (!p.images) return placeholder;
+            try {
+                const images = JSON.parse(p.images);
+                if (!Array.isArray(images) || !images.length) return placeholder;
+                const firstImage = images[0];
+                if (!firstImage || typeof firstImage !== 'string') return placeholder;
+                return `assets/uploads/products/${firstImage}`;
+            } catch (err) {
+                return placeholder;
+            }
+        }
+
         function renderProductCard(p, compact = false) {
             const stars = '⭐'.repeat(Math.round(p.avg_rating || 0));
             return `
                 <div class="product-card" onclick="viewProduct(${p.id})">
                     <div class="product-thumb">
                         <img
-                            src="${p.images ? 'assets/uploads/products/' + JSON.parse(p.images)[0] : 'assets/uploads/products/no-image.png'}"
+                            src="${getProductImage(p)}"
                             alt="${escHtml(p.name)}"
+                            onerror="this.onerror=null;this.src='assets/uploads/placeholder/no-image.jpeg';"
                             style="width:100%;height:100%;object-fit:cover;">
                         ${p.condition_type ? `<span class="condition-badge">${p.condition_type}</span>` : ''}
                     </div>
