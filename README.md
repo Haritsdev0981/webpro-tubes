@@ -112,13 +112,13 @@ teloved/
 | Anggota  | CRUD             | File Utama                                     |
 |----------|------------------|------------------------------------------------|
 | Harits   | CRUD 1 (User)    | `admin/users.php`                              |
-|          | CRUD 8 (Checkout)| `buyer/wishlist.php`, `api/orders.php`         |
-| Aurel    | CRUD 2 (Permission)| `admin/permissions.php`                      |
+|          | CRUD 6 (Review)  | `buyer/orders.php`, `api/reviews.php`          |
+| Aurel    | CRUD 3 (Produk)  | `seller/products.php`, `api/products.php`      |
 |          | CRUD 7 (Profil)  | `buyer/profile.php`, `seller/profile.php`, `api/profile.php` |
-| Ares     | CRUD 3 (Produk)  | `seller/products.php`, `api/products.php`      |
+| Ares     | CRUD 8 (Checkout)| `buyer/wishlist.php`, `api/orders.php`         |
 |          | CRUD 4 (Order)   | `seller/orders.php`                            |
 | Clarisa  | CRUD 5 (Wishlist)| `buyer/wishlist.php`, `api/wishlist.php`       |
-|          | CRUD 6 (Review)  | `buyer/orders.php`, `api/reviews.php`          |
+|          | CRUD 2 (Permission)| `admin/permissions.php`                      |
 
 ---
 
