@@ -210,6 +210,20 @@ $sellerId = $user['id'];
             }
         }
 
+        function getProductImage(p) {
+            const placeholder = '../assets/uploads/placeholder/no-image.jpeg';
+            if (!p.images) return placeholder;
+            try {
+                const imgs = JSON.parse(p.images || '[]');
+                if (!Array.isArray(imgs) || !imgs.length) return placeholder;
+                const firstImg = imgs[0];
+                if (!firstImg || firstImg === 'no-image.png' || firstImg === 'no-image.jpeg') return placeholder;
+                return `../assets/uploads/products/${firstImg}`;
+            } catch (e) {
+                return placeholder;
+            }
+        }
+
         function renderProducts(products) {
             const grid = document.getElementById('products-grid');
             if (!products.length) {
@@ -217,20 +231,8 @@ $sellerId = $user['id'];
                 return;
             }
             grid.innerHTML = products.map(p => {
-                // === BARU: ambil gambar pertama dari JSON images ===
-                let imgSrc = '../assets/uploads/products/no-image.png';
-                try {
-                    const imgs = JSON.parse(p.images || '[]');
-                    if (imgs.length && imgs[0] !== 'no-image.png') {
-                        imgSrc = `../assets/uploads/products/${imgs[0]}`;
-                    }
-                } catch(e) {}
-
-                const imgHtml = `<img src="${imgSrc}" alt="${escHtml(p.name)}" 
-                    class="product-thumb"
-                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="product-img-placeholder" style="display:none">📦</div>`;
-                // === Akhir BARU ===
+                const imgSrc = getProductImage(p);
+                const imgHtml = `<img src="${imgSrc}" alt="${escHtml(p.name)}" class="product-thumb" onerror="this.onerror=null;this.src='../assets/uploads/placeholder/no-image.jpeg';" />`;
 
                 return `
                     <div class="product-card">

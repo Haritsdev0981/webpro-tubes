@@ -21,7 +21,18 @@ $stmt = $db->prepare("
 $stmt->execute([$productId]);
 $product = $stmt->fetch();
 
-if (!$product) { header('Location: products.php'); exit; }
+if (!$product) {
+    header('Location: products.php');
+    exit;
+}
+
+$productImage = 'assets/uploads/placeholder/no-image.jpeg';
+if (!empty($product['images'])) {
+    $productImages = json_decode($product['images'], true);
+    if (is_array($productImages) && !empty($productImages[0]) && is_string($productImages[0])) {
+        $productImage = 'assets/uploads/products/' . $productImages[0];
+    }
+}
 
 $reviews = $db->prepare("SELECT r.*, u.name as buyer_name FROM reviews r JOIN users u ON u.id = r.buyer_id WHERE r.product_id = ? ORDER BY r.created_at DESC LIMIT 10");
 $reviews->execute([$productId]);
@@ -47,8 +58,10 @@ $currentUser = $isLoggedIn ? $_SESSION['user'] : null;
             background: #f1f3f5;
             border-radius: 12px;
             height: 380px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 80px; opacity: 0.4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 80px;
         }
 
         .detail-info { display: flex; flex-direction: column; gap: 14px; }
@@ -123,7 +136,13 @@ $currentUser = $isLoggedIn ? $_SESSION['user'] : null;
         </div>
         <nav class="nav-bottom">
             <a href="index.php">HOME</a>
-            <a href="products.php">PRODUK</a>
+            <?php if ($isLoggedIn): ?>
+            <a href="<?= $currentUser['role'] ?>/dashboard.php">DASHBOARD</a>
+            <?php endif; ?>
+            <a href="products.php" class="active">PRODUK</a>
+            <?php if ($isLoggedIn && $currentUser['role'] === 'buyer'): ?>
+            <a href="buyer/orders.php">ORDER PAGE</a>
+            <?php endif; ?>
         </nav>
     </header>
 
@@ -136,7 +155,18 @@ $currentUser = $isLoggedIn ? $_SESSION['user'] : null;
 
         <div class="detail-grid">
             <!-- Image -->
-            <div class="product-image-area">📦</div>
+            <div class="product-image-area">
+                <img
+                    src="<?= htmlspecialchars($productImage) ?>"
+                    alt="<?= htmlspecialchars($product['name']) ?>"
+                    onerror="this.onerror=null;this.src='assets/uploads/placeholder/no-image.jpeg';"
+                    style="
+                        width:100%;
+                        height:100%;
+                        object-fit:cover;
+                        border-radius:12px;
+                    ">
+            </div>
 
             <!-- Info -->
             <div class="detail-info">

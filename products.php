@@ -209,13 +209,14 @@ $catSlug   = htmlspecialchars($_GET['category'] ?? '');
 
                 <div class="filter-group">
                     <label>Kondisi</label>
-                    <div class="radio-group">
-                        <label class="radio-item"><input type="radio" name="condition" value=""> Semua</label>
-                        <label class="radio-item"><input type="radio" name="condition" value="Baru"> Baru</label>
-                        <label class="radio-item"><input type="radio" name="condition" value="Seperti Baru"> Seperti Baru</label>
-                        <label class="radio-item"><input type="radio" name="condition" value="Bekas - Baik"> Bekas - Baik</label>
-                        <label class="radio-item"><input type="radio" name="condition" value="Bekas - Cukup"> Bekas - Cukup</label>
-                    </div>
+
+                    <select id="conditionSelect">
+                        <option value="">Semua</option>
+                        <option value="Baru">Baru</option>
+                        <option value="Seperti Baru">Seperti Baru</option>
+                        <option value="Bekas - Baik">Bekas - Baik</option>
+                        <option value="Bekas - Cukup">Bekas - Cukup</option>
+                    </select>
                 </div>
 
                 <button class="btn-filter" onclick="applyFilter()">Terapkan Filter</button>
@@ -306,6 +307,20 @@ $catSlug   = htmlspecialchars($_GET['category'] ?? '');
             return 'Rp ' + Number(num).toLocaleString('id-ID');
         }
 
+        function getProductImage(p) {
+            const placeholder = 'assets/uploads/placeholder/no-image.jpeg';
+            if (!p.images) return placeholder;
+            try {
+                const images = JSON.parse(p.images);
+                if (!Array.isArray(images) || !images.length) return placeholder;
+                const firstImage = images[0];
+                if (!firstImage || typeof firstImage !== 'string') return placeholder;
+                return `assets/uploads/products/${firstImage}`;
+            } catch (err) {
+                return placeholder;
+            }
+        }
+
         async function loadProducts() {
             const params = new URLSearchParams({ public: 1 });
             if (INIT_SEARCH)   params.set('search', INIT_SEARCH);
@@ -335,7 +350,11 @@ $catSlug   = htmlspecialchars($_GET['category'] ?? '');
             grid.innerHTML = products.map(p => `
                 <div class="product-card-main">
                     <div class="product-card-img" onclick="window.location.href='product-detail.php?id=${p.id}'">
-                        <div class="img-placeholder">📦</div>
+                        <img
+                            src="${getProductImage(p)}"
+                            alt="${escHtml(p.name)}"
+                            onerror="this.onerror=null;this.src='assets/uploads/placeholder/no-image.jpeg';"
+                            style="width:100%;height:100%;object-fit:cover;">
                     </div>
                     <div class="product-card-body">
                         <div class="product-card-name">${escHtml(p.name)}</div>

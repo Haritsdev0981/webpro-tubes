@@ -85,12 +85,20 @@ if ($method === 'PUT') {
     if (!$review) jsonResponse(['error' => 'Ulasan tidak ditemukan'], 404);
     if ($review['buyer_id'] != $authUser['id']) jsonResponse(['error' => 'Bukan ulasan Anda'], 403);
 
+    // ✅ TAMBAHAN: cek apakah sudah pernah diedit
+    if ($review['is_edited'] == 1) {
+        jsonResponse(['error' => 'Ulasan hanya bisa diubah satu kali'], 403);
+    }
+
     $body    = json_decode(file_get_contents('php://input'), true) ?? [];
     $rating  = (int)($body['rating'] ?? $review['rating']);
     $comment = trim($body['comment'] ?? $review['comment']);
     if ($rating < 1 || $rating > 5) jsonResponse(['error' => 'Rating harus 1-5'], 400);
 
-    $db->prepare("UPDATE reviews SET rating=?, comment=? WHERE id=?")->execute([$rating, $comment, $id]);
+    // ✅ TAMBAHAN: set is_edited = 1 setelah berhasil update
+    $db->prepare("UPDATE reviews SET rating=?, comment=?, is_edited=1 WHERE id=?")
+       ->execute([$rating, $comment, $id]);
+
     jsonResponse(['success' => true, 'message' => 'Ulasan berhasil diperbarui']);
 }
 

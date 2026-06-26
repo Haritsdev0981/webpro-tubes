@@ -26,11 +26,14 @@ if ($method === 'GET') {
         // Buyer sees own checkouts
         $stmt = $db->prepare("
             SELECT c.*, p.name as product_name, p.price, u.name as seller_name,
-                   o.status as order_status, o.tracking_number, o.seller_note, o.id as order_id
+                   o.status as order_status, o.tracking_number, o.seller_note, o.id as order_id,
+                   rv.id as review_id, rv.rating as review_rating,
+                   rv.comment as review_comment, rv.is_edited as review_is_edited
             FROM checkouts c
             JOIN products p ON p.id = c.product_id
             JOIN users u ON u.id = c.seller_id
             LEFT JOIN orders o ON o.checkout_id = c.id
+            LEFT JOIN reviews rv ON rv.buyer_id = c.buyer_id AND rv.product_id = c.product_id
             WHERE c.buyer_id = ?
             ORDER BY c.created_at DESC
         ");
@@ -64,7 +67,27 @@ if ($method === 'GET') {
         ");
     }
 
-    jsonResponse(['success' => true, 'data' => $stmt->fetchAll()]);
+        $rows = $stmt->fetchAll();
+ 
+    // Untuk buyer: bentuk field review_* menjadi objek 'review' agar terbaca JavaScript
+    if ($authUser['role'] === 'buyer') {
+        $rows = array_map(function($row) {
+            if (!empty($row['review_id'])) {
+                $row['review'] = [
+                    'id'        => (int)$row['review_id'],
+                    'rating'    => (int)$row['review_rating'],
+                    'comment'   => $row['review_comment'],
+                    'is_edited' => (int)$row['review_is_edited'],
+                ];
+            } else {
+                $row['review'] = null;
+            }
+            unset($row['review_id'], $row['review_rating'], $row['review_comment'], $row['review_is_edited']);
+            return $row;
+        }, $rows);
+    }
+ 
+    jsonResponse(['success' => true, 'data' => $rows]);
 }
 
 // ============ POST: buyer creates checkout ============
