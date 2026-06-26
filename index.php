@@ -69,7 +69,7 @@ $currentUser = $isLoggedIn ? $_SESSION['user'] : null;
     <!-- HERO -->
     <section class="hero">
         <div class="hero-content">
-            <h1>Preloved Marketplace</h1>
+            <h1>Preloved Marketplace </h1>
             <p>Temukan tren pakaian dan aksesori terbaik untuk musim ini</p>
             <a href="products.php" class="btn-hero">Belanja Sekarang</a>
         </div>
@@ -158,7 +158,10 @@ $currentUser = $isLoggedIn ? $_SESSION['user'] : null;
             return `
                 <div class="product-card" onclick="viewProduct(${p.id})">
                     <div class="product-thumb">
-                        <div class="thumb-placeholder">📦</div>
+                        <img
+                            src="${p.images ? 'assets/uploads/products/' + JSON.parse(p.images)[0] : 'assets/uploads/products/no-image.png'}"
+                            alt="${escHtml(p.name)}"
+                            style="width:100%;height:100%;object-fit:cover;">
                         ${p.condition_type ? `<span class="condition-badge">${p.condition_type}</span>` : ''}
                     </div>
                     <div class="product-body">
